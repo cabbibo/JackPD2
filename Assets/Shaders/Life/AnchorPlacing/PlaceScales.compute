@@ -1,0 +1,222 @@
+#pragma kernel Transfer
+
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 og;
+  float2 uv;
+  float2 debug;
+};
+
+
+
+
+struct Particle{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tan;
+  float2 uv;
+  float used;
+  float3 triIDs;
+  float3 triWeights;
+  float3 debug;
+};
+
+
+
+RWStructuredBuffer<Vert> _VertBuffer;
+RWStructuredBuffer<Particle> _ParticleBuffer;
+
+int _VertBuffer_COUNT;
+int _ParticleBuffer_COUNT;
+
+
+float _Scale;
+int _VertsPerMesh;
+float _Time;
+
+#include "../../Chunks/safeID.cginc"
+#include "../../Chunks/hash.cginc"
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Transfer (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  if( pID < _ParticleBuffer_COUNT ){
+    
+    int sID = safeID( pID, _ParticleBuffer_COUNT );
+    Particle p = _ParticleBuffer[sID];
+
+    if( length(p.pos) == 0 ){
+      // calc new triWeights;
+      //float3 triWeights = float3(1,0,0);
+    }
+
+    Vert v1 = _VertBuffer[safeID((int)p.triIDs.x, _VertBuffer_COUNT )];
+    Vert v2 = _VertBuffer[safeID((int)p.triIDs.y, _VertBuffer_COUNT )];
+    Vert v3 = _VertBuffer[safeID((int)p.triIDs.z, _VertBuffer_COUNT )];
+
+  
+
+    p.pos = v1.pos * p.triWeights.x +  v2.pos * p.triWeights.y + v3.pos * p.triWeights.z;
+    p.nor = v1.nor * p.triWeights.x +  v2.nor * p.triWeights.y + v3.nor * p.triWeights.z;
+    p.uv  = v1.uv  * p.triWeights.x +  v2.uv  * p.triWeights.y + v3.uv  * p.triWeights.z;
+    p.vel = v1.vel  * p.triWeights.x +  v2.vel  * p.triWeights.y + v3.vel  * p.triWeights.z;
+    p.debug.xy  = v1.debug.xy  * p.triWeights.x +  v2.debug.xy  * p.triWeights.y + v3.debug.xy  * p.triWeights.z;
+    p.debug.z = pID;
+
+    p.pos = v1.pos;//v1.pos;
+
+    _ParticleBuffer[sID] = p;
+
+
+  }
+
+}
+
+
+/*
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Test (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  if( pID < _ParticleBuffer_COUNT ){
+    
+    int sID = safeID( pID, _ParticleBuffer_COUNT );
+    Particle p = _ParticleBuffer[sID];
+
+    Vert v1 = _VertBuffer[safeID((int)p.triIDs.x, _VertBuffer_COUNT )];
+    Vert v2 = _VertBuffer[safeID((int)p.triIDs.y, _VertBuffer_COUNT )];
+    Vert v3 = _VertBuffer[safeID((int)p.triIDs.z, _VertBuffer_COUNT )];
+
+    p.pos = v1.pos * p.triWeights.x +  v2.pos * p.triWeights.y + v3.pos * p.triWeights.z;
+    p.nor = v1.nor;//normalize(v1.vel);//float3(0,1,0);// v1.nor * p.triWeights.x +  v2.nor * p.triWeights.y + v3.nor * p.triWeights.z;
+    p.uv  = 0;//v1.uv  * p.triWeights.x +  v2.uv  * p.triWeights.y + v3.uv  * p.triWeights.z;
+    p.vel = 0;//v1.vel  * p.triWeights.x +  v2.vel  * p.triWeights.y + v3.vel  * p.triWeights.z;
+    //p.debug.xy  = v1.debug  * p.triWeights.x +  v2.debug  * p.triWeights.y + v3.debug  * p.triWeights.z;
+
+    _ParticleBuffer[sID] = p;
+
+
+  }
+
+}
+
+
+
+float _Force;
+float _OutAmount;
+float _Dampening;
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Force(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  if( pID < _ParticleBuffer_COUNT ){
+    
+    int sID = safeID( pID, _ParticleBuffer_COUNT );
+    Particle p = _ParticleBuffer[sID];
+
+    Vert v1 = _VertBuffer[safeID((int)p.triIDs.x, _VertBuffer_COUNT )];
+    Vert v2 = _VertBuffer[safeID((int)p.triIDs.y, _VertBuffer_COUNT )];
+    Vert v3 = _VertBuffer[safeID((int)p.triIDs.z, _VertBuffer_COUNT )];
+
+
+    float3 targetPos = v1.pos * p.triWeights.x +  v2.pos * p.triWeights.y + v3.pos * p.triWeights.z;
+
+    float3 targetNor =v1.nor * p.triWeights.x +  v2.nor * p.triWeights.y + v3.nor * p.triWeights.z;
+
+
+  float3 force = 0;
+
+  force += ((targetPos+ targetNor * _OutAmount)-p.pos) * _Force ;
+
+    p.vel += force * .01;
+    p.pos += p.vel;
+    p.vel *= _Dampening;
+
+
+    p.nor = targetNor;
+    p.uv  = v1.uv  * p.triWeights.x +  v2.uv  * p.triWeights.y + v3.uv  * p.triWeights.z;
+
+    _ParticleBuffer[sID] = p;
+
+
+  }
+
+}
+
+
+
+float _DT;
+
+
+#include "../../Chunks/hash.cginc"
+#include "../../Chunks/snoise.cginc"
+#include "../../Chunks/curlNoise.cginc"
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Emit(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  if( pID < _ParticleBuffer_COUNT ){
+    
+    int sID = safeID( pID, _ParticleBuffer_COUNT );
+    Particle p = _ParticleBuffer[sID];
+
+    Vert v1 = _VertBuffer[safeID((int)p.triIDs.x, _VertBuffer_COUNT )];
+    Vert v2 = _VertBuffer[safeID((int)p.triIDs.y, _VertBuffer_COUNT )];
+    Vert v3 = _VertBuffer[safeID((int)p.triIDs.z, _VertBuffer_COUNT )];
+
+
+    float3 pos = v1.pos * p.triWeights.x +  v2.pos * p.triWeights.y + v3.pos * p.triWeights.z;
+    float3 nor = v1.nor * p.triWeights.x +  v2.nor * p.triWeights.y + v3.nor * p.triWeights.z;
+
+    if( p.debug.x < 0 ){
+      
+
+      p.pos = pos;
+      p.nor = nor;
+      p.uv  = v1.uv  * p.triWeights.x +  v2.uv  * p.triWeights.y + v3.uv  * p.triWeights.z;
+      p.vel = v1.vel  * p.triWeights.x +  v2.vel  * p.triWeights.y + v3.vel  * p.triWeights.z;
+
+      p.debug.x = 1;
+
+    }
+
+  float3 force = 0;
+
+  p.debug.x -= hash(float(pID)) * _DT * 3;
+
+  force += nor;
+
+  force += curlNoise( p.pos * .3+ float3(0,_Time * .2,0)) * 20;
+
+    p.vel += force * .1 * _DT;
+    p.pos += p.vel * _DT;
+    p.vel *= .98;
+
+    p.debug.y = _LoopbackBuffer[pID % 1024];
+
+
+    p.nor = p.vel;
+    p.uv  = v1.uv  * p.triWeights.x +  v2.uv  * p.triWeights.y + v3.uv  * p.triWeights.z;
+
+    _ParticleBuffer[sID] = p;
+
+
+  }
+
+}*/

@@ -1,0 +1,212 @@
+﻿#pragma kernel Flow
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tan;
+  float2 uv;
+  float debug;
+  float life;
+};
+
+struct Head{
+  float4x4 ltw;
+  float4x4 wtl;
+};
+
+
+float4x4 _Transform;
+
+RWStructuredBuffer<Vert> _VertBuffer;
+RWStructuredBuffer<Head> _HeadBuffer;
+
+float _TrailFollowForce;
+float _TrailFollowDampening;
+
+int _ParticlesPerTrail;
+
+int _VertBuffer_COUNT;
+int _HeadBuffer_COUNT;
+#include "Assets/Shaders/Chunks/safeID.cginc"
+#include "Assets/Shaders/Chunks/snoise.cginc"
+#include "Assets/Shaders/Chunks/hash.cginc"
+#include "Assets/Shaders/Chunks/curlNoise.cginc"
+#include "Assets/Shaders/Chunks/ParticleAxisHelpers.cginc"
+
+
+
+float4x4 _OrbTransform;
+float4x4 _CameraTransform;
+
+float _OrbRepelForce;
+float _OrbRadius;
+float _OrbCurlForce;
+
+float _CameraRepelForce;
+float _CameraViewRepelForce;
+float _CameraCurlForce;
+float _CameraForceFalloff;
+
+
+float3 distToLine( float3 ro , float3 rd , float3 p){
+
+rd = normalize(rd); // Make sure the direction is normalized
+
+float3 ro_p = p - ro;
+float projectionLength = dot(ro_p, rd);
+float3 projectionPoint = ro + projectionLength * rd;
+
+float3 dif = p - projectionPoint; // This is the shortest vector from p to the line defined by ro and rd}
+return dif;
+
+
+}
+
+
+void OrbForces( inout Vert v , inout float3 force ){
+
+  float3 orbPos = mul( _OrbTransform , float4(0,0,0,1)).xyz;
+  float3 orbUp = normalize(mul( _OrbTransform , float4(0,1,0,0)).xyz);
+
+  float3 dif = orbPos - v.pos;
+
+ // force += cross(dif, orbUp) * _OrbCurlForce; 
+
+
+  if( length(dif) < _OrbRadius+ .5){
+
+    float d = (_OrbRadius + .5 -length(dif))/ .5;
+    force -= normalize(dif) * _OrbRepelForce * d;
+
+    if( length(dif) < _OrbRadius ){
+      v.pos = orbPos - normalize(dif) *  _OrbRadius * 1;;
+      v.vel *= .5;
+    }
+
+  }
+
+}
+
+void CameraForces(  inout Vert v , inout float3 force  ){
+
+  float3 camPos = mul( _CameraTransform , float4(0,0,0,1)).xyz;
+  float3 camDir = normalize(mul( _CameraTransform , float4(0,0,1,0)).xyz);
+
+  float3 dif =  distToLine(camPos , camDir, v.pos);
+  force += (normalize(dif)/length(dif)) * _CameraRepelForce* (1 /(1+length(v.pos-camPos)*_CameraForceFalloff) );
+
+  //force += cross( (normalize(dif)/length(dif)), camDir) * _CameraCurlForce;
+
+}
+
+
+float getScale( float4x4 m ){
+  float3 worldScale = float3(
+    length(float3(m[0].x, m[1].x, m[2].x)), // scale x axis
+    length(float3(m[0].y, m[1].y, m[2].y)), // scale y axis
+    length(float3(m[0].z, m[1].z, m[2].z))  // scale z axis
+    );
+
+    return worldScale.x;
+}
+
+
+void DoInit( inout Vert vert , float pID ){
+
+}
+
+float3 DoRemitPosition(int p){
+    int whichHead = p / _ParticlesPerTrail;
+    int idInTrail = p % _ParticlesPerTrail;
+    float v = float(idInTrail) / float(_ParticlesPerTrail);
+
+    Head head = _HeadBuffer[safeID(whichHead,_HeadBuffer_COUNT)];
+
+
+    float3 headPos = mul( head.ltw, float4(0,0,0,1)).xyz;//_HeadBuffer[safeID(whichHead,_HeadBuffer_COUNT)].pos;
+
+   return headPos + float3(0,100,0) * v;
+}
+
+float3 DoRemitVelocity(int p){return 0;}
+
+
+float3 DoForce( inout Vert vert , int pID){
+    float3 force = 0;
+
+    int idInTrail = pID % _ParticlesPerTrail;
+    int whichHead = pID / _ParticlesPerTrail;
+
+    Head head = _HeadBuffer[safeID(whichHead,_HeadBuffer_COUNT)];
+
+
+    float3 headPos = mul( head.ltw, float4(0,0,0,1)).xyz;//_HeadBuffer[safeID(whichHead,_HeadBuffer_COUNT)].pos;
+
+    float3 targetPos = 0;
+    if( idInTrail == 0 ){
+        targetPos = headPos;
+    }else{
+        targetPos = _VertBuffer[safeID(pID-1,_VertBuffer_COUNT)].pos;
+    }
+
+
+    force += (targetPos - vert.pos) * _TrailFollowForce;
+    force *= .03;
+
+    float life = 1;// _HeadBuffer[safeID(whichHead,_HeadBuffer_COUNT)].life;
+    float debug = 1;// _HeadBuffer[safeID(whichHead,_HeadBuffer_COUNT)].debug;
+   
+    // If our head is remitting we need to be remitting too!
+    if( life > 1.5  ){
+
+      float3 random = float3(
+        sin(1.41+ float(whichHead) * 100),
+        sin(1.41+ float(whichHead) * 131.41),
+        sin(1.41+ float(whichHead) * 85.44)
+      );
+
+      float3 dir = cross( random , float3(0,1,0));
+      float3 dir2 = cross( random , float3(1,0,0));
+      float3 dir3 = cross( random , float3(0,1,0));
+
+
+        vert.pos = headPos + random * 5 * vert.uv.x + dir * sin( vert.uv.x * 10 ) * 1 + dir * sin( vert.uv.x * 330 ) * .4 + dir * sin( vert.uv.x * 310 ) * .4; //  + .1;; //  + .1;
+        vert.vel = 0;
+        force = 0;
+    }
+
+    //vert.nor = float3(0,0,1);//normalize( vert.vel );
+    //vert.tan = float3(1,0,0);//normalize( cross( vert.nor , float3(1,0,0)));
+
+    vert.life = life;
+
+    vert.uv.x = float( idInTrail) / float( _ParticlesPerTrail);
+    vert.uv.y = float( whichHead) / float( _HeadBuffer_COUNT);
+
+    vert.debug = debug * (1-vert.uv.x);
+
+  //  force = 0; 
+
+    //OrbForces( vert, force);
+   // CameraForces( vert, force);
+    //vert.pos = 0;
+    return force;
+}
+
+
+float DoLife( Vert v , int pID ){
+    return 0;
+}
+
+
+float DoDampening( Vert v , int pID ){
+    return _TrailFollowDampening;
+}
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow(uint3 id : SV_DispatchThreadID) {
+    #include "../../Chunks/SimplifiedSimulation.cginc"
+}

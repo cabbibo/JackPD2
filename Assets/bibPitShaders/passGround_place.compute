@@ -1,0 +1,112 @@
+﻿#pragma kernel Transfer
+
+
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float2 debug;
+};
+
+float4x4 _Transform;
+
+RWStructuredBuffer<Vert> _VertBuffer;
+
+int _VertBuffer_COUNT;
+int _TransformBuffer_COUNT;
+
+#include "Assets/Shaders/Chunks/safeID.cginc"
+#include "Assets/Shaders/Chunks/snoise.cginc"
+#include "Assets/Shaders/Chunks/hash.cginc"
+#include "Assets/Shaders/Chunks/curlNoise.cginc"
+
+float _DT;
+float _Time;
+
+float _Radius;
+
+#include "Assets/Shaders/Chunks/SampleFullAudioCompute.cginc"
+
+
+float3 getPos(float xV , float yV ){
+  float3 pos = 0;
+
+  pos += xV * float3(1,0,0);
+  pos += yV * float3(0,0,1);
+
+  float l = length(pos);
+
+  
+  float4 aVal = sampleAudio(l);
+
+  pos *= _Radius;
+
+  float n = snoise(pos *1+ float3(0,1,0) * _Time * 0.5f) * pow( length(float2(xV,yV)),.5);
+
+  pos.y += n * .3 - 3* smoothstep(0,1,l) + .1*aVal;
+
+return pos;
+
+}
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Transfer(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+
+float3 x = float3(1,0,0);
+float3 y = float3(0,0,1);
+
+  float angle = vert.uv.x * 6.28f;
+  float xV = cos(angle) * vert.uv.y;
+  float yV = -sin(angle) * vert.uv.y;
+
+  float3 pos = getPos(xV , yV );
+
+  float eps = .01;
+
+  float3 n = cross(
+    normalize(( getPos( xV + eps, yV) - getPos( xV-eps,yV))*1000),
+    normalize(( getPos( xV , yV+ eps) - getPos( xV,yV-eps))*1000)
+  );
+
+  vert.nor = n;
+
+
+
+  float3 tPos = mul(_Transform,float4(pos,1)).xyz;
+
+  float3 force = 0;
+  float3 d = vert.pos - tPos;
+  force -= d * 11.1;
+
+ // force += 1.1 * float3(0,1,0)*length(aVal.xyz);
+
+  if( length(force)> 100){
+    force = normalize(force) * 100;
+  }
+
+  vert.vel += force * .001;  
+  
+  if( length(vert.vel)> 100){
+    vert.vel = normalize(vert.vel) * 100;
+  }
+
+  vert.pos += vert.vel;
+  vert.vel *= .95;
+
+//vert.pos = mul(_Transform,float4(pos,1)).xyz;
+
+
+  
+  _VertBuffer[pID] = vert;
+}

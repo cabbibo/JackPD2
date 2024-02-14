@@ -1,0 +1,96 @@
+#pragma kernel Transfer
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float2 debug;
+};
+
+
+
+RWStructuredBuffer<Vert> _VertBuffer;
+RWStructuredBuffer<Vert> _BaseBuffer;
+RWStructuredBuffer<Vert> _SkeletonBuffer;
+
+int _VertBuffer_COUNT;
+int _SkeletonBuffer_COUNT;
+int _BaseBuffer_COUNT;
+
+
+int _VertsPerMesh;
+
+float _DT;
+
+
+
+#include "Assets/Shaders/Chunks/safeID.cginc"
+#include "Assets/Shaders/Chunks/snoise.cginc"
+#include "Assets/Shaders/Chunks/curlNoise.cginc"
+#include "Assets/Shaders/Chunks/SampleFullAudioCompute.cginc"
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Transfer (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+
+  if( pID < _VertBuffer_COUNT ){
+
+    int which = pID / _VertsPerMesh;
+    
+    Vert b = _BaseBuffer[safeID(pID %_VertsPerMesh , _BaseBuffer_COUNT )];
+    Vert p = _SkeletonBuffer[safeID( which , _SkeletonBuffer_COUNT )];
+    Vert v = _VertBuffer[sID];
+
+
+
+
+    float3 tPos = b.pos + p.pos;
+
+float match = dot(normalize(p.vel) , normalize(b.pos));
+
+float n = (float(which)% _NumStems) / _NumStems;
+
+float2 lookup = float2( match * .1 + .2, n);
+
+float4 audio = sampleAudio( lookup.x ,lookup.y );
+
+
+
+
+    
+
+    float3 force = 0;
+
+    float3 d = (p.pos + b.pos  * ( length(audio)  *.2+ 1)  ) - v.pos;
+
+    force +=  5*d * (match + 2);// * (length(audio)+ .1) ;//10*length(d) * normalize(d) / (.5+10*length(d));
+    force +=  20*b.nor * length(audio);
+
+    if( length(p.pos-v.pos) < length(b.pos) ){
+      force +=  1*b.nor;// * length(audio);
+    }
+    //force += curlNoise(v.pos * 1.1) * 1.1  * b.nor;
+
+    v.vel += force * .001;
+    v.vel *= .98;
+    v.pos += v.vel;
+
+    v.debug = float2( float(which)+.01, length( d) );//lookup;
+
+
+
+    
+
+    _VertBuffer[sID] = v;
+
+  }
+
+}

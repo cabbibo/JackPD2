@@ -1,0 +1,348 @@
+﻿#pragma kernel Flow
+#pragma kernel StarField
+#pragma kernel spater1
+#pragma kernel lightRays
+
+
+
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float3 axis;
+  float life;
+};
+
+float4x4 _Transform;
+
+RWStructuredBuffer<Vert> _VertBuffer;
+
+int _VertBuffer_COUNT;
+int _TransformBuffer_COUNT;
+
+#include "../../Chunks/safeID.cginc"
+#include "../../Chunks/snoise.cginc"
+#include "../../Chunks/hash.cginc"
+#include "../../Chunks/curlNoise.cginc"
+#include "../../Chunks/ParticleAxisHelpers.cginc"
+
+
+
+RWStructuredBuffer<float4> _AudioBuffer;
+int _AudioBuffer_COUNT;
+
+void DoInit( inout Vert vert , float pID ){
+    vert.life = hash(float(pID));
+    vert.axis = newAxis(float(pID));
+}
+
+float3 DoRemitPosition(int p){
+
+    
+    float x = sin((float(p) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(p) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+    x  *= .01;
+    y *= .01;
+   return mul( _Transform, float4( x,y,0,1)).xyz;
+}
+
+float3 DoRemitVelocity(int p){return 0;}
+float _Time;
+float4 a;
+float3 DoForce( inout Vert vert , int pID){
+
+
+    float id = (float(pID) / float(_VertBuffer_COUNT) ) * float(_AudioBuffer_COUNT) * .25;
+    a = _AudioBuffer[ (pID * .5) % _AudioBuffer_COUNT];
+
+    float3 force = 0;
+    force += 1.4*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    force += float3(x,y,0);
+
+
+
+    force *= a;
+    force *= .00004;// * (1+hash(pID*1021.))/2;
+
+
+    vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;
+    // Giving the vert a tangent
+    vert.tangent =normalize(cross( vert.axis , normalize( vert.nor )));
+    
+    return force;
+}
+
+float DoLife( Vert v , int pID ){
+
+
+
+    return .0001 * (3+sin(float(pID))) * length(a);
+}
+
+float DoDampening( Vert v , int pID){
+    return .98;
+}
+
+
+float _DT;
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+    DoInit(vert, float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+
+    vert.pos = DoRemitPosition(pID);
+    vert.vel = DoRemitVelocity(pID);
+    vert.life = 1;//
+  
+  }else{
+
+    float3 force = DoForce( vert , pID); //float3(0,0,0);
+
+    vert.vel += force * _DT * _DT * 3000;/// * .00004 * (1+hash(pID*1021.))/2;
+
+    vert.life -= DoLife( vert , pID );//.0004 * (3+sin(float(pID)));
+    vert.pos += length(a *a* .001) *vert.vel *30 * _DT  * 60;// vert.vel * a * .1;
+
+    vert.vel *= DoDampening( vert , pID );
+
+  }
+
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void StarField(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+    
+    vert.life =1;//  hash(float(pID));
+
+  }
+
+  if( vert.life < 0 ){
+
+    vert.pos = float3(sin(float(pID)), 0 ,0 );//float3( hash(float(pID*123))-.5 ,  hash(float(pID*500))-.5, hash(float(pID*203))+3 );
+    vert.vel = float3(0,0,-.01);
+    vert.life = 1;//
+  
+  }else{
+
+    float3 force = 0;//DoForce( vert , pID); //float3(0,0,0);
+
+    vert.vel += force * _DT * _DT * 3000;/// * .00004 * (1+hash(pID*1021.))/2;
+
+    vert.life -= .001;// * hash(float(pID));//DoLife( vert , pID );//.0004 * (3+sin(float(pID)));
+    //vert.pos += length(a *a* .001) *vert.vel *30 * _DT  * 60;// vert.vel * a * .1;
+    vert.pos += vert.vel * _DT  * 60;// vert.vel * a * .1;
+
+    vert.vel *= 1;//DoDampening( vert , pID );
+
+  }
+
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+float _OSCValue;
+float _OSCID;
+
+
+  const float PHI = 1.61803398874989484820459; // Φ = Golden Ratio 
+
+  float gold_noise(in float2 xy, in float seed)
+  {
+    return frac(tan(distance(xy*PHI, xy)*seed)*xy.x);
+  }
+
+
+  float3 randomDir( float seed ){
+
+
+    return normalize(float3( 
+      gold_noise(float2(hash(seed), hash(seed*2)),seed * 11),
+      gold_noise(float2(hash(seed*7), hash(seed*3)),seed *12 ),
+      gold_noise(float2(hash(seed*5), hash(seed*4)),seed * 13)
+    ) - .5);
+
+
+
+  }
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void spater1(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+    
+    vert.life =1;//  hash(float(pID));
+
+  }
+
+
+    float id1 = (float(pID) / float(_VertBuffer_COUNT) ) * float(_AudioBuffer_COUNT) * .25;
+    float4 a = _AudioBuffer[ (pID * .5) % _AudioBuffer_COUNT];
+
+    float lA = length(a);
+
+  if( vert.life < 0 ){
+
+    float3 dir = randomDir( float(pID) + _Time + _OSCValue + _OSCID );//normalize( float3( hash(float(pID*123 + _Time+_OSCValue))-.5 ,  hash(float(pID*500+ _Time+_OSCValue))-.5, hash(float(pID*203+ _Time+_OSCValue))-.5 ) );
+
+    vert.pos = dir * _OSCValue * 2 + mul(_Transform, float4(0,0,0,1)).xyz;
+    vert.vel = dir *  _OSCValue * 2;
+    vert.life = 1;//
+  
+  }else{
+
+    float3 force = 0;//DoForce( vert , pID); //float3(0,0,0);
+
+    force += curlNoise( vert.pos  * .1) * .02;
+
+    vert.vel += force * _DT * _DT * 3000;/// * .00004 * (1+hash(pID*1021.))/2;
+
+    vert.life -= .001 * _OSCValue * 1 * (hash(float(pID))+.5);// pow(lA,4)* .1;// * hash(float(pID));//DoLife( vert , pID );//.0004 * (3+sin(float(pID)));
+    //vert.pos += length(a *a* .001) *vert.vel *30 * _DT  * 60;// vert.vel * a * .1;
+    vert.pos += vert.vel * _DT  * 60;// vert.vel * a * .1;
+
+    vert.vel *= .97;//DoDampening( vert , pID );
+
+  }
+
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+float3 _WrenPos;
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void lightRays(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+    
+    vert.life = -1;//  hash(float(pID));
+
+  }
+
+
+    float id1 = (float(pID) / float(_VertBuffer_COUNT) ) * float(_AudioBuffer_COUNT) * .25;
+    float4 a = _AudioBuffer[ (pID * .5) % _AudioBuffer_COUNT];
+
+    float lA = length(a);
+
+  if( vert.life < 0 ){
+
+    float3 dir = randomDir( float(pID) + _Time + _OSCValue + _OSCID );//normalize( float3( hash(float(pID*123 + _Time+_OSCValue))-.5 ,  hash(float(pID*500+ _Time+_OSCValue))-.5, hash(float(pID*203+ _Time+_OSCValue))-.5 ) );
+
+    vert.pos = dir * _OSCValue * 2 +  _WrenPos; //mul(_Transform, float4(0,0,0,1)).xyz;
+    vert.vel = dir *  _OSCValue * 2;
+    vert.life = 1;//
+  
+  }else{
+
+    float3 force = 0;//DoForce( vert , pID); //float3(0,0,0);
+
+    force += curlNoise( vert.pos  * .1) * .02;
+
+    for( int i = 0; i < _VertBuffer_COUNT; i++){
+      if( i != pID ){
+        float3 p2 = _VertBuffer[i].pos;
+
+        force += (normalize(vert.pos - p2)/(.1 + length(vert.pos - p2))) * .01;
+      }
+    }
+
+    force -= (vert.pos - _WrenPos) * .3;
+
+ 
+
+    force += normalize(vert.pos - _WrenPos) * 1.3 *(.4 + 3*_OSCValue);
+   
+   
+   if( length( vert.pos - _WrenPos) > 100 ){
+      vert.pos = _WrenPos + .1;
+      vert.vel = 0;
+    }
+    //force += randomDir( float(pID) * 13.891 + _OSCID * 100 );
+    force += curlNoise( vert.pos * .04 ) * _OSCValue * .1;
+
+    if( length(force)> 100){
+      force = normalize(force) * 100;
+    }
+
+     if( length(vert.vel)> 100){
+      vert.vel = normalize(vert.vel) * 100;
+    }
+
+
+    vert.vel += force  * .01;/// * .00004 * (1+hash(pID*1021.))/2;
+
+    //vert.life -= .001 * _OSCValue * 1 * (hash(float(pID))+.5);// pow(lA,4)* .1;// * hash(float(pID));//DoLife( vert , pID );//.0004 * (3+sin(float(pID)));
+    //vert.pos += length(a *a* .001) *vert.vel *30 * _DT  * 60;// vert.vel * a * .1;
+    vert.pos += vert.vel;// vert.vel * a * .1;
+
+    
+    vert.vel *= .97;//DoDampening( vert , pID );
+
+
+    vert.axis = float3(_OSCValue , _OSCID/10 , 0 );
+
+  }
+
+
+  
+  _VertBuffer[pID] = vert;
+}

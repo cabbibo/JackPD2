@@ -1,0 +1,129 @@
+﻿#pragma kernel Flow
+
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 ogPos;
+  float3 axis;
+  float life;
+};
+
+
+
+
+
+
+RWStructuredBuffer<Vert> _VertBuffer;
+
+int _VertBuffer_COUNT;
+
+#include "Assets/Shaders/Chunks/safeID.cginc"
+#include "Assets/Shaders/Chunks/snoise.cginc"
+#include "Assets/Shaders/Chunks/hash.cginc"
+#include "Assets/Shaders/Chunks/curlNoise.cginc"
+#include "Assets/Shaders/Chunks/BibPit.cginc"
+
+
+float4x4 rotation(float3 axis, float angle)
+{
+    axis = normalize(axis);
+    float s = sin(angle);
+    float c = cos(angle);
+    float oc = 1.0 - c;
+    
+    return float4x4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
+                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
+                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
+                0.0,                                0.0,                                0.0,                                1.0);
+}
+
+
+
+
+float3 newAxis( float id ){
+  float3 a = float3(hash(id),hash(id*10),hash(id*20));
+  return a * 2 - 1;
+}
+
+float4x4 _Transform;
+
+float _Time;
+
+
+float3 _OrbPosition;
+float _OrbScale;
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+  float fID = float(pID);
+
+
+  if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+
+    float x = hash(fID*10 + hash(fID *2.440) * 10 + hash(fID * 31.33))-.5;
+    float y = hash(fID*112 + hash(fID *27.440) * 15.7 + hash(fID * 914.33))-.5;
+    float z = hash(fID*12 + hash(fID *7.440) * 95.7 + hash(fID * 91.33))-.5;
+    
+   x *= 40;
+   y *= 40;
+   z *= 40;
+
+
+   float3 dir = float3(x,z,y);
+// respawn
+  if( vert.life < 0 ){
+   // float3 pos = float3(vert.uv.x/_MapSize,0, vert.uv.y/_MapSize );
+    float p = float(pID);
+    
+
+
+    vert.pos = mul(_Transform, float4(dir * 1,1)); //worldPos(pos);
+    vert.life = vert.life+1;
+    vert.vel = 0;
+
+  }else{
+
+    float3 force = float3(0,0,0);
+    force += .5*curlNoise(vert.pos * .03 + float3(0,_Time * .3,0));
+   // force -= float3(0,2,0) * vert.life;
+
+    force += dir * .01;
+
+    float3 d = vert.pos - _OrbPosition;
+    if( length(d) < _OrbScale ){
+      force += normalize(d) * 100;
+    }
+
+
+    vert.vel += force  * .0004 * (1+hash(pID*1021.))/2;
+
+    vert.life -= .001 * (3+sin(float(pID)));
+
+    vert.pos += vert.vel;
+
+    vert.vel *= .98;
+
+  }
+  
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*1*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;
+  
+  _VertBuffer[pID] = vert;
+
+}
+
+
+
+
+

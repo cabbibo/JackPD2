@@ -1,0 +1,762 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5001897464885364420
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8598812957887440509}
+  - component: {fileID: 3741539533457896382}
+  - component: {fileID: 804609902245087399}
+  - component: {fileID: 4169221179883000660}
+  - component: {fileID: 531500896370795716}
+  - component: {fileID: 1448638962173105169}
+  m_Layer: 0
+  m_Name: HairTubes
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8598812957887440509
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5001897464885364420}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 224660280590968876}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3741539533457896382
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5001897464885364420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8443bc56f048bae4fa67c0920fa5bc4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles:
+  - {fileID: 804609902245087399}
+  - {fileID: 1448638962173105169}
+  verts: {fileID: 4169221179883000660}
+  triangles: {fileID: 531500896370795716}
+  transfer: {fileID: 1448638962173105169}
+  body: {fileID: 804609902245087399}
+  showBody: 1
+  skeleton: {fileID: 7950807504251958882}
+  radius: 0.01
+  transformArray:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  binders: []
+--- !u!114 &804609902245087399
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5001897464885364420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4c7fa692e4cc426aa37fba780fcae78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles:
+  - {fileID: 4169221179883000660}
+  - {fileID: 531500896370795716}
+  verts: {fileID: 4169221179883000660}
+  triangles: {fileID: 531500896370795716}
+  material: {fileID: 2100000, guid: 0087b1395caed8845b61b768816710c4, type: 2}
+  debugMaterial: {fileID: 0}
+  blockRender: 0
+--- !u!114 &4169221179883000660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5001897464885364420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4416eacad904d94197e46dd8999eb09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  count: 250000
+  saveName: entity3912700
+  alwaysRemake: 1
+  intBuffer: 0
+  structSize: 16
+  description: 
+  timeToCreate: 0
+  totalMemory: 0
+  debugMaterial: {fileID: 2100000, guid: 5ec31fc377d637845bc7b451b442e217, type: 2}
+  loadedFromFile: 0
+  hair: {fileID: 7950807504251958882}
+  width: 4
+  length: 5
+  numTubes: 10000
+--- !u!114 &531500896370795716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5001897464885364420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a2796955fdd25a49af771f3a74b12c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  count: 960000
+  saveName: entity3955796
+  alwaysRemake: 1
+  intBuffer: 1
+  structSize: 1
+  description: 
+  timeToCreate: 0
+  totalMemory: 0
+  debugMaterial: {fileID: 2100000, guid: a26208c937c775a469f0791f9e50c4fd, type: 2}
+  loadedFromFile: 0
+  toIndex: {fileID: 4169221179883000660}
+  width: 4
+  length: 5
+  numTubes: 10000
+  verts: {fileID: 4169221179883000660}
+--- !u!114 &1448638962173105169
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5001897464885364420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521ed2d62d2034941a1197389f9c70d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  selfStop: 0
+  primaryName: _VertBuffer
+  primaryForm: {fileID: 4169221179883000660}
+  shader: {fileID: 7200000, guid: d319c52722b366a48be3a73967027685, type: 3}
+  kernelName: Wonky
+  countMultiplier: 1
+  kernel: 4
+  executionTime: 0
+  definedGroups: 0
+  definedGroupsX: 0
+  definedGroupsY: 0
+  definedGroupsZ: 0
+--- !u!1 &8434695525437180900
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 224660280590968876}
+  - component: {fileID: 4521588318831397126}
+  - component: {fileID: 7950807504251958882}
+  - component: {fileID: 704897909985832108}
+  - component: {fileID: 5664300737556372885}
+  - component: {fileID: 6369070653453631535}
+  - component: {fileID: 3164943194167879820}
+  m_Layer: 0
+  m_Name: hairsOnAnchors
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &224660280590968876
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8434695525437180900}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8598812957887440509}
+  m_Father: {fileID: 4221548272751570645}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4521588318831397126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8434695525437180900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e3c4e017228b354380d0265e04d0588, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles:
+  - {fileID: 7950807504251958882}
+  - {fileID: 6369070653453631535}
+  - {fileID: 5664300737556372885}
+  - {fileID: 704897909985832108}
+  - {fileID: 3741539533457896382}
+  - {fileID: 3164943194167879820}
+  set: {fileID: 704897909985832108}
+  collision: {fileID: 5664300737556372885}
+  constraint: {fileID: 6369070653453631535}
+  Base: {fileID: 1313234084715998245}
+  Hair: {fileID: 7950807504251958882}
+  transformArray:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  numFrames: 4967
+--- !u!114 &7950807504251958882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8434695525437180900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b15bad925a9c9c4ab551086288442ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  count: 40000
+  saveName: entity2379585
+  alwaysRemake: 1
+  intBuffer: 0
+  structSize: 16
+  description: 
+  timeToCreate: 0
+  totalMemory: 0
+  debugMaterial: {fileID: 2100000, guid: 87da72007608115469a21bc4a83757c3, type: 2}
+  loadedFromFile: 0
+  baseForm: {fileID: 1313234084715998245}
+  numVertsPerHair: 4
+  length: 0.3
+  variance: 0
+  lineDebugMaterial: {fileID: 0}
+  numHairs: 10000
+  countMultiplier: 1
+  debugBasis: 0
+--- !u!114 &704897909985832108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8434695525437180900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521ed2d62d2034941a1197389f9c70d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 0
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  selfStop: 0
+  primaryName: _VertBuffer
+  primaryForm: {fileID: 7950807504251958882}
+  shader: {fileID: 7200000, guid: 8fd4adc6541c3b84e8047ccf86c10013, type: 3}
+  kernelName: Set
+  countMultiplier: 1
+  kernel: 0
+  executionTime: 0
+  definedGroups: 0
+  definedGroupsX: 0
+  definedGroupsY: 0
+  definedGroupsZ: 0
+--- !u!114 &5664300737556372885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8434695525437180900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521ed2d62d2034941a1197389f9c70d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  selfStop: 0
+  primaryName: _VertBuffer
+  primaryForm: {fileID: 7950807504251958882}
+  shader: {fileID: 7200000, guid: 8fd4adc6541c3b84e8047ccf86c10013, type: 3}
+  kernelName: Collision
+  countMultiplier: 1
+  kernel: 1
+  executionTime: 0
+  definedGroups: 0
+  definedGroupsX: 0
+  definedGroupsY: 0
+  definedGroupsZ: 0
+--- !u!114 &6369070653453631535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8434695525437180900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed243af0e768bc34fbc125e59c6247b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  selfStop: 0
+  primaryName: _VertBuffer
+  primaryForm: {fileID: 7950807504251958882}
+  shader: {fileID: 7200000, guid: 8fd4adc6541c3b84e8047ccf86c10013, type: 3}
+  kernelName: Constraint
+  countMultiplier: 1
+  kernel: 2
+  executionTime: 0
+  definedGroups: 0
+  definedGroupsX: 0
+  definedGroupsY: 0
+  definedGroupsZ: 0
+  numPasses: 2
+  numIterations: 1
+--- !u!114 &3164943194167879820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8434695525437180900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845e02f920a3c5544b21bd35fbe58791, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  toBind: {fileID: 5664300737556372885}
+  _NoiseSize: 1111
+  _NoiseForce: 1
+  _NoiseSpeed: 1
+  _Dampening: 0.9
+  _NormalForce: 1
+  _Gravity: {x: 0, y: 0, z: 0}
+--- !u!1 &9035682614331425846
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4221548272751570645}
+  - component: {fileID: 6611021274399845351}
+  - component: {fileID: 1313234084715998245}
+  - component: {fileID: 1581911059423455984}
+  m_Layer: 0
+  m_Name: particlesOnTubs (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4221548272751570645
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9035682614331425846}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 224660280590968876}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6611021274399845351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9035682614331425846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 284c8261cddc4f54298805883b5fff8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles:
+  - {fileID: 1313234084715998245}
+  - {fileID: 1581911059423455984}
+  - {fileID: 4521588318831397126}
+  nameInBuffer: _ParticleBuffer
+  form: {fileID: 1313234084715998245}
+  life: {fileID: 1581911059423455984}
+  skipFormBind: 0
+  binders: []
+--- !u!114 &1313234084715998245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9035682614331425846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e72d3c710a131143be02cf170845538, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles:
+  - {fileID: 1581911059423455984}
+  count: 10000
+  saveName: entity3919783
+  alwaysRemake: 1
+  intBuffer: 0
+  structSize: 24
+  description: 
+  timeToCreate: 0
+  totalMemory: 0
+  debugMaterial: {fileID: 2100000, guid: 736858b3c1ea8734084801ae875826ab, type: 2}
+  loadedFromFile: 0
+  verts: {fileID: 0}
+  life: {fileID: 1581911059423455984}
+  tris: {fileID: 0}
+  noiseType: 
+  noiseSize: 0
+--- !u!114 &1581911059423455984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9035682614331425846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521ed2d62d2034941a1197389f9c70d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 0
+  begunGestation: 0
+  gestating: 0
+  gestated: 0
+  begunBirth: 0
+  birthing: 0
+  birthed: 0
+  begunLive: 0
+  living: 0
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 1
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  selfStop: 0
+  primaryName: _ParticleBuffer
+  primaryForm: {fileID: 1313234084715998245}
+  shader: {fileID: 7200000, guid: 396ca75e7a2c4594e9e794c62a2e6b73, type: 3}
+  kernelName: Transfer
+  countMultiplier: 1
+  kernel: 0
+  executionTime: 0
+  definedGroups: 0
+  definedGroupsX: 0
+  definedGroupsY: 0
+  definedGroupsZ: 0

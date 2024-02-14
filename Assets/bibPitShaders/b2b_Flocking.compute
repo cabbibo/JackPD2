@@ -1,0 +1,629 @@
+#pragma kernel Flow
+#pragma kernel Predator
+#pragma kernel Prey
+
+
+
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float value;
+  float life;
+};
+
+float4x4 _Transform;
+float4x4 _SpawnPoint;
+
+RWStructuredBuffer<Vert> _VertBuffer;
+int _VertBuffer_COUNT;
+
+
+RWStructuredBuffer<float> _AudioBuffer;
+
+int _AudioBuffer_COUNT;
+int _TransformBuffer_COUNT;
+
+#include "Assets/Shaders/Chunks/safeID.cginc"
+#include "Assets/Shaders/Chunks/snoise.cginc"
+#include "Assets/Shaders/Chunks/hash.cginc"
+#include "Assets/Shaders/Chunks/curlNoise.cginc"
+#include "Assets/Shaders/Chunks/ParticleAxisHelpers.cginc"
+
+
+float3 _Center;
+float3 _Size;
+
+float _CohesionDistance;
+float _CohesionStrength;
+
+float _AlignmentDistance;
+float _AlignmentStrength;
+
+
+float _SeperationDistance;
+float _SeperationStrength;
+
+float _MaxSpeed;
+
+float _DT;
+float _Time;
+
+float _CenterForce;
+
+
+
+float _CurlForce;
+float _CurlSize;
+float _CurlSpeed;
+
+float4x4 _OrbTransform;
+float4x4 _CameraTransform;
+
+float _OrbRepelForce;
+float _OrbRadius;
+float _OrbCurlForce;
+
+float _CameraRepelForce;
+float _CameraViewRepelForce;
+float _CameraCurlForce;
+float _CameraForceFalloff;
+
+
+float3 distToLine( float3 ro , float3 rd , float3 p){
+
+rd = normalize(rd); // Make sure the direction is normalized
+
+float3 ro_p = p - ro;
+float projectionLength = dot(ro_p, rd);
+float3 projectionPoint = ro + projectionLength * rd;
+
+float3 dif = p - projectionPoint; // This is the shortest vector from p to the line defined by ro and rd}
+return dif;
+
+
+}
+
+
+void OrbForces( inout Vert v , inout float3 force ){
+
+  float3 orbPos = mul( _OrbTransform , float4(0,0,0,1)).xyz;
+  float3 orbUp = normalize(mul( _OrbTransform , float4(0,1,0,0)).xyz);
+
+  float3 dif = orbPos - v.pos;
+
+  force += cross(dif, orbUp) * _OrbCurlForce; 
+
+
+  if( length(dif) < _OrbRadius + .5){
+
+    float d = (_OrbRadius + .5 -length(dif))/ .5;
+    force -= normalize(dif) * _OrbRepelForce * d;
+
+    if( length(dif) < _OrbRadius && _OrbRepelForce > .001 ){
+      //v.pos = orbPos - normalize(dif) *  _OrbRadius * 1;;
+      v.vel *= .5;
+    }
+
+  }
+
+}
+
+void CameraForces(  inout Vert v , inout float3 force  ){
+
+  float3 camPos = mul( _CameraTransform , float4(0,0,0,1)).xyz;
+  float3 camDir = normalize(mul( _CameraTransform , float4(0,0,1,0)).xyz);
+
+  float3 dif =  distToLine(camPos , camDir, v.pos);
+  force += (normalize(dif)/length(dif)) * _CameraRepelForce * (1 /(1+length(v.pos-camPos)*_CameraForceFalloff) );//pow( 1 - length(dif)/_CameraForceFalloff , 2);
+
+  force += cross( (normalize(dif)/length(dif)), camDir) * _CameraCurlForce;
+
+}
+
+
+float getScale( float4x4 m ){
+  float3 worldScale = float3(
+    length(float3(m[0].x, m[1].x, m[2].x)), // scale x axis
+    length(float3(m[0].y, m[1].y, m[2].y)), // scale y axis
+    length(float3(m[0].z, m[1].z, m[2].z))  // scale z axis
+    );
+
+    return worldScale.x;
+}
+
+float sdBox(float3 p ,float3 c, float3 b)
+{
+    float3 d = abs(p-c) - b;
+    return length(max(d,0.0))
+         + min(max(d.x,max(d.y,d.z)),0.0); // remove this line for an only partially signed sdf 
+}
+
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+  int aID = (id.x * 3) % _AudioBuffer_COUNT;
+  float audio = _AudioBuffer[aID];
+
+  // Reset
+  if( vert.life < 1){
+
+    vert.pos = float3(
+                        (hash(float(pID+ 20 * hash(pID * 454))) + hash(float(pID+4) + 20 * hash(pID * 414)) -1) * _Size.x + _Center.x,
+                        (hash(float(pID+31+ 11 * hash(pID * 45514))) + hash(float(pID+1)+ 44 * hash(pID * 416)) -1) * _Size.y + _Center.y,
+                        (hash(float(pID+33+ 20 * hash(pID * 4514))) + hash(float(pID+22)+ 20 * hash(pID * 44)) -1) * _Size.z + _Center.z
+                      );
+
+      vert.pos  *= .0001;
+      vert.pos += mul( _SpawnPoint , float4(vert.pos,1)).xyz;
+
+    vert.life = 2;
+
+  }else{
+    // SOME BUFFER FOR PLACING
+    if( vert.life>1.5){
+      vert.life -= .1;
+    }
+  }
+  
+   
+    float3 force = 0;
+    force +=_CurlForce * 1.3*curlNoise(vert.pos*_CurlSize * 1.4 + float3(0,0,_Time * .12* _CurlSpeed));
+    force +=_CurlForce * 2.3*curlNoise(vert.pos*_CurlSize * .4 + float3(0,0,_Time * .1  * _CurlSpeed));
+
+
+  force += (vert.pos - _Center) * _CenterForce;
+
+
+
+
+
+
+  float3 alignment = 0;
+  float3 seperation = 0;
+
+
+  float cohesionCount = 0;
+  float3 center;
+
+
+    for( int i = 0; i < _VertBuffer_COUNT; i++ ){
+
+      if( i == pID ) continue;
+
+      Vert other = _VertBuffer[i];
+
+      float3 diff = other.pos - vert.pos;
+
+    
+      float dist = length(diff);
+      if( dist < .0001 ){
+        vert.pos += float3(
+                        (hash(float(pID+ 244 * hash(pID * 44))) + hash(float(pID+41) + 55520 * hash(pID * 4414)) -1) * _Size.x + _Center.x,
+                        (hash(float(pID+31+ 111 * hash(pID * 414))) + hash(float(pID+1)+ 417 * hash(pID * 63)) -1) * _Size.y + _Center.y,
+                        (hash(float(pID+344+ 21 * hash(pID * 451))) + hash(float(pID+6)+ 285 * hash(pID * 46)) -1) * _Size.z + _Center.z
+                      );
+      }
+
+      float3 oVel =other.vel;
+
+
+      if (dist < _AlignmentDistance)
+      {
+          alignment += oVel;
+      }
+
+      if (dist < _SeperationDistance)
+      {
+          seperation += diff * (1 / dist);
+      }
+  
+  
+      if (dist < _CohesionDistance)
+      {
+          center += other.pos;
+          cohesionCount ++;
+      }
+
+    }    
+
+
+    if( cohesionCount > 0 ){
+      center /= cohesionCount;
+      force +=  (center -vert.pos) * _CohesionStrength;
+    }
+    
+    force += alignment * _AlignmentStrength;
+    force -= seperation * _SeperationStrength;
+    
+    if (sdBox(vert.pos , _Center, _Size) > 0) {
+       force -= vert.pos - _Center;
+    }
+
+
+OrbForces( vert , force);
+CameraForces( vert , force);
+
+
+
+
+    force *= .1;
+  //force *= audio * 10;
+    vert.vel += force;
+
+
+    //vert.vel  *= pow( audio ,10)* .0000004 + .5;
+    
+    if( length( vert.vel) > _MaxSpeed){ vert.vel = normalize(vert.vel) *_MaxSpeed;}
+   
+    vert.pos += vert.vel;//  *(pow( audio ,10)* .0000004 + .5);
+
+
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+
+
+
+
+
+
+
+RWStructuredBuffer<Vert> _PredatorBuffer;
+int _PredatorBuffer_COUNT;
+
+float _FleeForce;
+float _FleeRadius;
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Prey(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+  int aID = (id.x * 3) % _AudioBuffer_COUNT;
+  float audio = _AudioBuffer[aID];
+
+  // Reset
+  if( vert.life < 1){
+
+    vert.pos = float3(
+                        (hash(float(pID+ 20 * hash(pID * 454))) + hash(float(pID+4) + 20 * hash(pID * 414)) -1) * _Size.x + _Center.x,
+                        (hash(float(pID+31+ 11 * hash(pID * 45514))) + hash(float(pID+1)+ 44 * hash(pID * 416)) -1) * _Size.y + _Center.y,
+                        (hash(float(pID+33+ 20 * hash(pID * 4514))) + hash(float(pID+22)+ 20 * hash(pID * 44)) -1) * _Size.z + _Center.z
+                      );
+
+      vert.pos  *= .1;
+      vert.pos += mul( _SpawnPoint , float4(vert.pos,1)).xyz;
+
+    vert.life = 2;
+
+  }else{
+    // SOME BUFFER FOR PLACING
+    if( vert.life>1.5){
+      vert.life -= .1;
+    }
+  }
+  
+   
+    float3 force = 0;
+    force +=_CurlForce * 1.3*curlNoise(vert.pos*_CurlSize * 1.4 + float3(0,0,_Time * .12* _CurlSpeed));
+    force +=_CurlForce * 2.3*curlNoise(vert.pos*_CurlSize * .4 + float3(0,0,_Time * .1  * _CurlSpeed));
+
+
+  force += (vert.pos - _Center) * _CenterForce;
+
+  /*for( int j = 0; j < _PredatorBuffer_COUNT; j++ ){
+    float3 d = _PredatorBuffer[j].pos - vert.pos;
+
+    if( length(d) < _FleeRadius){
+      force += -normalize(d) * _FleeForce * (dot( normalize(_PredatorBuffer[j].vel) , normalize(vert.vel)) +2);
+    //  force += cross( -normalize(d), float3(0,1,0)) * _FleeForce * 1.5;
+    }
+  }
+
+*/
+
+
+
+
+
+  float3 alignment = 0;
+  float3 seperation = 0;
+
+
+  float cohesionCount = 0;
+  float3 center;
+
+
+    for( int i = 0; i < _VertBuffer_COUNT; i++ ){
+
+      if( i == pID ) continue;
+
+      Vert other = _VertBuffer[i];
+
+      float3 diff = other.pos - vert.pos;
+
+    
+      float dist = length(diff);
+      if( dist < .0001 ){
+        vert.pos += float3(
+                        (hash(float(pID+ 244 * hash(pID * 44))) + hash(float(pID+41) + 55520 * hash(pID * 4414)) -1) * _Size.x + _Center.x,
+                        (hash(float(pID+31+ 111 * hash(pID * 414))) + hash(float(pID+1)+ 417 * hash(pID * 63)) -1) * _Size.y + _Center.y,
+                        (hash(float(pID+344+ 21 * hash(pID * 451))) + hash(float(pID+6)+ 285 * hash(pID * 46)) -1) * _Size.z + _Center.z
+                      );
+      }
+
+      float3 oVel =other.vel;
+
+
+      if (dist < _AlignmentDistance)
+      {
+          alignment += oVel;
+      }
+
+      if (dist < _SeperationDistance)
+      {
+          seperation += diff * (1 / dist);
+      }
+  
+  
+      if (dist < _CohesionDistance)
+      {
+          center += other.pos;
+          cohesionCount ++;
+      }
+
+    }    
+
+
+    if( cohesionCount > 0 ){
+      center /= cohesionCount;
+      force +=  (center -vert.pos) * _CohesionStrength;
+    }
+    
+    force += alignment * _AlignmentStrength;
+    force -= seperation * _SeperationStrength;
+    
+    if (sdBox(vert.pos , _Center, _Size) > 0) {
+       force -= vert.pos - _Center;
+    }
+
+
+OrbForces( vert , force);
+CameraForces( vert , force);
+
+
+
+
+    force *= .1;
+  //force *= audio * 10;
+    vert.vel += force;
+
+
+    //vert.vel  *= pow( audio ,10)* .0000004 + .5;
+    
+    if( length( vert.vel) > _MaxSpeed){ vert.vel = normalize(vert.vel) *_MaxSpeed;}
+   
+    vert.pos += vert.vel;//  *(pow( audio ,10)* .0000004 + .5);
+
+
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RWStructuredBuffer<Vert> _PreyBuffer;
+int _PreyBuffer_COUNT;
+
+float _AttackForce;
+float _AttackRadius;
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Predator(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+  int aID = (id.x * 3) % _AudioBuffer_COUNT;
+  float audio = _AudioBuffer[aID];
+
+  // Reset
+  if( vert.life < 1){
+
+    vert.pos = float3(
+                        (hash(float(pID+ 20 * hash(pID * 454))) + hash(float(pID+4) + 20 * hash(pID * 414)) -1) * _Size.x + _Center.x,
+                        (hash(float(pID+31+ 11 * hash(pID * 45514))) + hash(float(pID+1)+ 44 * hash(pID * 416)) -1) * _Size.y + _Center.y,
+                        (hash(float(pID+33+ 20 * hash(pID * 4514))) + hash(float(pID+22)+ 20 * hash(pID * 44)) -1) * _Size.z + _Center.z
+                      );
+
+      vert.pos  *= .01;
+      vert.pos += mul( _SpawnPoint , float4(vert.pos,1)).xyz;
+
+    vert.life = 2;
+
+  }else{
+    // SOME BUFFER FOR PLACING
+    if( vert.life>1.5){
+      vert.life -= .1;
+    }
+  }
+  
+   
+    float3 force = 0;
+    force +=_CurlForce * 1.3*curlNoise(vert.pos*_CurlSize * 1.4 + float3(0,0,_Time * .12* _CurlSpeed));
+    force +=_CurlForce * 2.3*curlNoise(vert.pos*_CurlSize * .4 + float3(0,0,_Time * .1  * _CurlSpeed));
+
+
+  force += (vert.pos - _Center) * _CenterForce;
+
+
+
+
+
+
+  if( _Time > vert.life  + 100 ){
+    
+    float min = 10000;
+  
+   /* for( int j = 0; j < _PreyBuffer_COUNT; j++ ){
+      float3 d = _PreyBuffer[j].pos - vert.pos;
+      
+
+      if( length(d) < min){
+        min = length(d);
+        vert.value = j;
+        vert.life = _Time;
+      }
+    }*/
+
+
+
+
+
+        vert.value = floor(_Time) + hash(float(pID+_Time+ 244 * hash(pID * 44 +_Time)));
+     
+
+  }else{
+
+
+
+    float3 d = _PreyBuffer[(vert.value*_PreyBuffer_COUNT)%_PreyBuffer_COUNT].pos - vert.pos;
+    if( length(d)> _AttackRadius){
+    
+      force += normalize(d) * _AttackForce;
+    }
+
+    if( length(d) < _AttackRadius){
+        vert.value = floor(_Time) + hash(float(pID+_Time+ 244 * hash(pID * 44 +_Time)));
+    }
+
+  }
+
+
+
+
+
+
+
+  float3 alignment = 0;
+  float3 seperation = 0;
+
+
+  float cohesionCount = 0;
+  float3 center;
+
+
+    for( int i = 0; i < _VertBuffer_COUNT; i++ ){
+
+      if( i == pID ) continue;
+
+      Vert other = _VertBuffer[i];
+
+      float3 diff = other.pos - vert.pos;
+
+    
+      float dist = length(diff);
+      if( dist < .0000001 ){
+        force += float3(
+                        (hash(float(pID+ 244 * hash(pID * 44))) + hash(float(pID+41) + 55520 * hash(pID * 4414)) -1) * _Size.x + _Center.x,
+                        (hash(float(pID+31+ 111 * hash(pID * 414))) + hash(float(pID+1)+ 417 * hash(pID * 63)) -1) * _Size.y + _Center.y,
+                        (hash(float(pID+344+ 21 * hash(pID * 451))) + hash(float(pID+6)+ 285 * hash(pID * 46)) -1) * _Size.z + _Center.z
+                      );
+      }
+
+      float3 oVel =other.vel;
+
+
+      if (dist < _AlignmentDistance)
+      {
+          alignment += oVel;
+      }
+
+      if (dist < _SeperationDistance)
+      {
+          seperation += diff * (1 / dist);
+      }
+  
+  
+      if (dist < _CohesionDistance)
+      {
+          center += other.pos;
+          cohesionCount ++;
+      }
+
+    }    
+
+
+    if( cohesionCount > 0 ){
+      center /= cohesionCount;
+      force +=  (center -vert.pos) * _CohesionStrength;
+    }
+    
+    force += alignment * _AlignmentStrength;
+    force -= seperation * _SeperationStrength;
+    
+    if (sdBox(vert.pos , _Center, _Size) > 0) {
+       force -= vert.pos - _Center;
+    }
+
+
+OrbForces( vert , force);
+CameraForces( vert , force);
+
+
+
+
+    force *= .1;
+  //force *= audio * 10;
+    vert.vel += force;
+
+
+    //vert.vel  *= pow( audio ,10)* .0000004 + .5;
+    
+    if( length( vert.vel) > _MaxSpeed){ vert.vel = normalize(vert.vel) *_MaxSpeed;}
+   
+    vert.pos += vert.vel;//  *(pow( audio ,10)* .0000004 + .5);
+
+
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+

@@ -1,0 +1,311 @@
+﻿#pragma kernel Transfer
+#pragma kernel Default
+#pragma kernel Set
+#pragma kernel AudioBounce
+#pragma kernel spacePUPPY1
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float2 debug;
+};
+
+
+float _DT;
+
+float4x4 _Transform;
+
+RWStructuredBuffer<Vert> _VertBuffer;
+RWStructuredBuffer<Vert> _SkeletonBuffer;
+
+int _VertBuffer_COUNT;
+int _SkeletonBuffer_COUNT;
+
+float _Time;
+float3 _DisformerPosition;
+
+
+float _Force;
+float _Dampening;
+float _DisformerForce;
+#include "../../Chunks/safeID.cginc"
+
+
+
+
+float PHI = 1.61803398874989484820459 * 00000.1; // Golden Ratio   
+float PI  = 3.14159265358979323846264 * 00000.1; // PI
+float SQ2 = 1.41421356237309504880169 * 10000.0; // Square Root of Two
+
+float gold_noise(in float2 coordinate, in float seed){
+    return frac(tan(distance(coordinate*(seed+PHI), float2(PHI, PI)))*SQ2);
+}
+
+
+RWStructuredBuffer<float4> _AudioBuffer;
+
+int  _AudioBuffer_COUNT; 
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void AudioBounce(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+  if( pID < _VertBuffer_COUNT ){
+
+    Vert b = _SkeletonBuffer[safeID( pID , _SkeletonBuffer_COUNT )];
+
+
+    float3 anchorPosition =  mul( _Transform , float4( b.pos , 1)).xyz;
+    float3 anchorNormal = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+
+    Vert v = _VertBuffer[ sID ];
+
+        float3 force = 0;
+
+    force += (anchorPosition - v.pos)*30;
+
+    if( length( anchorPosition-v.pos) > 1 ){
+      v.pos = anchorPosition;
+      v.vel = 0;
+    }
+
+
+    float seed = 3.14159;
+    for( int i = 0; i < 30; i++ ){
+
+  
+      float fi = float(i);
+        // Note: Use uniform random generator instead of noise in your applications
+        float theta = 2.0f * seed  * gold_noise(float2(fi * 0.3482f, fi * 2.18622f), seed);
+        float phi = acos(1.0f - 2.0f * gold_noise(float2(fi * 1.9013, fi * 0.94312), seed));
+        float x = sin(phi) * cos(theta);
+        float y = sin(phi) * sin(theta);
+        float z = cos(phi);
+       	
+        //float3 p1 = float3(x,y,z) * gold_noise(float2(fi * 1.554f, fi * 10.18622f), seed) * 1000;
+        float3 p1 = float3(sin(fi*5652),cos(fi*5552),sin(fi*12012)) * 1;
+    float3 dist = v.pos  -  (p1+_DisformerPosition);///_DisformerPosition;
+
+    float4 audio = _AudioBuffer[i * 3];
+
+
+  if( length( dist) * 3 < audio.x  ){
+    force += normalize(dist) * 1;//(normalize(dist)/(1+length(dist)) );//*.1 * audio.x;//* audio.x * .001;//// * audio.xyz;
+  }
+    }
+
+  
+    v.vel += force   * _DT* _DT *100  ;
+    v.pos += v.vel*_DT * 10;
+
+    //v.vel = 0;
+   // v.pos = float3(float(pID) *.01,0,0)+ float3(0,_AudioBuffer[sID % _AudioBuffer_COUNT].x,0 ); //_AudioBuffer[sID % _AudioBuffer_COUNT].xyz * .001 + float3(float(pID) *.01,0,0);
+    v.vel *= .9;
+  
+    v.nor       = anchorNormal;//normalize(mul( _Transform , float4( b.nor , 0).xyz));
+    v.tangent   = normalize(mul( _Transform , float4( b.tangent , 0).xyz));;
+    v.uv        = b.uv;
+
+
+    v.debug.x = length(anchorPosition - v.pos);
+
+    _VertBuffer[sID] = v;
+
+  }else{
+
+
+  }
+
+}
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Default(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+  if( pID < _VertBuffer_COUNT ){
+
+    Vert b = _SkeletonBuffer[safeID( pID , _SkeletonBuffer_COUNT )];
+
+
+    float3 anchorPosition =  mul( _Transform , float4( b.pos , 1)).xyz;
+    float3 anchorNormal = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+
+    Vert v = _VertBuffer[ sID ];
+
+   float3 dist = v.pos  - _DisformerPosition;///_DisformerPosition;
+
+
+    float3 force = 0;
+
+    force += (anchorPosition - v.pos)*10;
+    force += (-normalize(dist) )*.3;
+
+  
+    v.vel += force * .001 ;
+    v.pos += v.vel;
+    v.vel *= .98;
+  
+    v.nor       = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+    v.tangent   = normalize(mul( _Transform , float4( b.tangent , 0).xyz));;
+    v.uv        = b.uv;
+
+    _VertBuffer[sID] = v;
+
+  }else{
+
+
+  }
+
+}
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Set(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+  if( pID < _VertBuffer_COUNT ){
+
+    Vert b = _SkeletonBuffer[safeID( pID , _SkeletonBuffer_COUNT )];
+
+
+    float3 anchorPosition =  mul( _Transform , float4( b.pos , 1)).xyz;
+    float3 anchorNormal = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+
+    Vert v = _VertBuffer[ sID ];
+
+   
+
+    v.pos = anchorPosition;
+    v.nor = anchorNormal;
+    //v.nor       = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+    v.tangent   = normalize(mul( _Transform , float4( b.tangent , 0).xyz));;
+    v.uv        = b.uv;
+
+    _VertBuffer[sID] = v;
+
+  }else{
+
+
+  }
+
+}
+
+
+
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Transfer(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+  if( pID < _VertBuffer_COUNT ){
+
+    Vert b = _SkeletonBuffer[safeID( pID , _SkeletonBuffer_COUNT )];
+
+
+    float3 anchorPosition =  mul( _Transform , float4( b.pos , 1)).xyz;
+    float3 anchorNormal = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+
+    Vert v = _VertBuffer[ sID ];
+
+   float3 dist = v.pos  - _DisformerPosition;///_DisformerPosition;
+
+
+    float3 force = 0;
+
+    force += (anchorPosition - v.pos)* _Force;
+    force += (-normalize(dist) )*_DisformerForce;
+
+  
+    v.vel += force * .001 ;
+    v.pos += v.vel;
+    v.vel *= _Dampening;
+  
+    v.nor       = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+    v.tangent   = normalize(mul( _Transform , float4( b.tangent , 0).xyz));;
+    v.uv        = b.uv;
+
+    _VertBuffer[sID] = v;
+
+  }else{
+
+
+  }
+
+}
+
+
+
+
+
+ 
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void spacePUPPY1(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+  if( pID < _VertBuffer_COUNT ){
+
+    Vert b = _SkeletonBuffer[safeID( pID , _SkeletonBuffer_COUNT )];
+
+
+    float3 anchorPosition =  mul( _Transform , float4( b.pos , 1)).xyz;
+    float3 anchorNormal = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+
+    Vert v = _VertBuffer[ sID ];
+
+   float3 dist = v.pos  - _DisformerPosition;///_DisformerPosition;
+
+
+    float3 force = 0;
+
+    force += (anchorPosition - v.pos)*10;
+    force += (-normalize(dist) )*.3;
+
+  
+    v.vel += force * .001 ;
+    v.pos += v.vel;
+    v.vel *= .98;
+  
+    v.nor       = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+    v.tangent   = normalize(mul( _Transform , float4( b.tangent , 0).xyz));;
+    v.uv        = b.uv;
+
+    _VertBuffer[sID] = v;
+
+  }else{
+
+
+  }
+
+}

@@ -1,0 +1,201 @@
+﻿#pragma kernel ember
+
+
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float3 axis;
+  float life;
+};
+
+float4x4 _Transform;
+
+RWStructuredBuffer<Vert> _VertBuffer;
+
+int _VertBuffer_COUNT;
+int _TransformBuffer_COUNT;
+
+#include "../../Chunks/safeID.cginc"
+#include "../../Chunks/snoise.cginc"
+#include "../../Chunks/hash.cginc"
+#include "../../Chunks/curlNoise.cginc"
+#include "../../Chunks/ParticleAxisHelpers.cginc"
+
+float _DT;
+float _Time;
+
+
+float3 _NoiseSize;
+float3 _NoiseSpeed;
+float _NoiseForce;
+
+
+float3 _NoiseSize2;
+float3 _NoiseSpeed2;
+float _NoiseForce2;
+float _Dampening;
+float _LifeTime;
+float3 _EmitSize;
+float3 _EmitOffset;
+float _AudioForceAmount;
+
+float _NoiseOffsetStart;
+
+
+float _TextureImportance;
+
+float _TextSize;
+
+
+Texture2D<float4> _TextMap;
+SamplerState linearClampSampler;
+
+float rand(float c , float o){
+  float2 co = float2(c,o);
+    return frac(sin(dot(co, float2(12.9898, 78.233))) * 43758.5453);
+}
+
+
+
+float3 getPos( float vID , float i){
+
+
+  float3 pos = float3(
+    ((hash( (vID+i) ) + hash((vID+i) * 10) + hash((vID+i)*100))/3)-.5,
+    ((hash( (vID+i)*3 ) + hash((vID+i) * 33) + hash((vID+i)*333))/3)-.5,
+    ((hash( (vID+i) *31) + hash((vID+i) * 51) + hash((vID+i)*555))/3)-.5
+                );
+
+
+    pos +=  float3(
+    ((hash( (vID+i)*3.55 ) + hash((vID+i) * 60.55) + hash((vID+i)*49.44))/3)-.5,
+    ((hash( (vID+i)*6.24 ) + hash((vID+i) * 50.5215) + hash((vID+i)*62.5))/3)-.5,
+    ((hash( (vID+i) *6.545) + hash((vID+i) * 1.55) + hash((vID+i)*400.44))/3)-.5
+                );
+
+
+
+       pos +=           float3(
+    ((hash( (vID+i)*6.66 ) + hash((vID+i) * 69.55) + hash((vID+i)*91.34))/3)-.5,
+    ((hash( (vID+i)*40.24 ) + hash((vID+i) * 41.965) + hash((vID+i)*37.5))/3)-.5,
+    ((hash( (vID+i) *96.545) + hash((vID+i) * 642.85) + hash((vID+i)*44.94))/3)-.5
+                );
+
+
+
+      return pos;
+
+
+}
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void ember(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  float vID = float(pID);
+
+
+
+
+  float3 pos = getPos(vID,_Time);
+
+  pos *= _EmitSize;
+  pos += _EmitOffset;
+ 
+ 
+ 
+ 
+ 
+ 
+  float3 vel = float3(0,hash(float(pID*12+_Time)),0) * .0;
+
+
+  
+  
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+    vert.pos = pos;
+    vert.vel = vel;
+    vert.life = hash(float(pID * 313));//
+
+  }
+
+  if( vert.life < 0 ){
+
+
+float respawnOnTexture = hash(float(pID*48.3));
+
+if( respawnOnTexture < _TextureImportance ){
+
+for( int i = 0; i < 30; i++ ){
+
+  pos = getPos(vID,_Time+float(i*10));
+
+    float4 color = _TextMap.SampleLevel(linearClampSampler, (pos.xy*_TextSize)+.5, 0);
+
+
+
+  pos *= _EmitSize;
+  pos += _EmitOffset;
+
+if( color.x < 0.5 ){
+    vert.pos = pos;
+    float3 cnoise = curlNoise( vert.pos * _NoiseSize + _NoiseSpeed * _Time );
+    cnoise +=curlNoise( vert.pos * _NoiseSize2 + _NoiseSpeed2 * _Time );
+
+  //  vert.pos += cnoise * _NoiseOffsetStart;
+      vert.vel =vel;
+      vert.life = 1;//
+
+      break;
+
+}
+
+}
+
+}else{
+
+  pos = getPos(vID,_Time+float(10));
+
+  
+
+  pos *= _EmitSize;
+  pos += _EmitOffset;    
+  vert.pos = pos;
+
+  //  vert.pos += cnoise * _NoiseOffsetStart;
+      vert.vel =vel;
+      vert.life = 1;//
+
+}
+  
+  }else{
+
+    float3 force = 0;//DoForce( vert , pID); //float3(0,0,0);
+
+    force += curlNoise( vert.pos * _NoiseSize + _NoiseSpeed * _Time ) * _NoiseForce;
+    force += curlNoise( vert.pos * _NoiseSize2 + _NoiseSpeed2 * _Time ) * _NoiseForce2;
+    //force += float3(0,.00001,0);
+
+    vert.vel += force * .1;/// * .00004 * (1+hash(pID*1021.))/2;
+
+    vert.life -=  _LifeTime * hash(float(pID));//DoLife( vert , pID );//.0004 * (3+sin(float(pID)));
+    //vert.pos += length(a *a* .001) *vert.vel *30 * _DT  * 60;// vert.vel * a * .1;
+    vert.pos += vert.vel;// vert.vel * a * .1;
+
+    vert.vel *= _Dampening;//DoDampening( vert , pID );
+
+  }
+
+
+  
+  _VertBuffer[pID] = vert;
+}

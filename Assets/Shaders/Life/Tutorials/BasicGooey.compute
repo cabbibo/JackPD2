@@ -1,0 +1,173 @@
+﻿#pragma kernel Transfer
+#pragma kernel TransformDisform
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float2 debug;
+};
+
+float4x4 _Transform;
+
+struct Transform{
+  float4x4  ltw;
+  float4x4  wtl;
+};
+
+RWStructuredBuffer<Vert> _VertBuffer;
+RWStructuredBuffer<Vert> _SkeletonBuffer;
+RWStructuredBuffer<Transform> _TransformBuffer;
+RWStructuredBuffer<float> _LoopbackBuffer;
+
+int _VertBuffer_COUNT;
+int _SkeletonBuffer_COUNT;
+int _TransformBuffer_COUNT;
+
+
+/*
+RWStructuredBuffer<Transform> _InterfaceCubeBuffer;
+int _InterfaceCubeBuffer_COUNT;*/
+
+int _LoopbackBuffer_COUNT;
+
+#include "../../Chunks/safeID.cginc"
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Transfer (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+  if( pID < _VertBuffer_COUNT ){
+
+    Vert b = _SkeletonBuffer[safeID( pID , _SkeletonBuffer_COUNT )];
+
+
+    float3 anchorPosition =  mul( _Transform , float4( b.pos , 1)).xyz;
+    float3 anchorNormal = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+
+    Vert v = _VertBuffer[ sID ];
+
+    float3 force = 0;
+
+    force += anchorPosition - v.pos;
+
+
+    v.vel += force * .001;
+    v.pos += v.vel;
+    v.vel *= .98;
+
+    v.nor       = anchorNormal;
+    v.tangent   = normalize(mul( _Transform , float4( b.tangent , 0).xyz));;
+    v.uv        = b.uv;
+
+    _VertBuffer[sID] = v;
+
+  }else{
+
+
+  }
+
+}
+
+
+
+
+
+float sdBox( float3 p, float3 b )
+{
+  float3 d = abs(p) - b;
+  return min(max(d.x,max(d.y,d.z)),0.0) +
+         length(max(d,0.0));
+}
+
+float _DT;
+
+[numthreads(NR_THREADS,1,1)]
+void TransformDisform (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+  if( pID < _VertBuffer_COUNT ){
+
+    Vert b = _SkeletonBuffer[safeID( pID , _SkeletonBuffer_COUNT )];
+
+
+    float3 anchorPosition =  mul( _Transform , float4( b.pos , 1)).xyz;
+    float3 anchorNormal = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+
+    Vert v = _VertBuffer[ sID ];
+
+    float3 force = 0;
+
+    force += (anchorPosition - v.pos) * 200;
+
+    for( int i = 0; i < _TransformBuffer_COUNT; i++ ){
+      
+      float4x4 wtl = _TransformBuffer[i].wtl;
+      float4x4 ltw = _TransformBuffer[i].ltw;
+
+      float3 tPos = mul( ltw , float4( 0,0,0, 1 ) ).xyz;
+
+
+
+
+      //float3 lPos = mul( wtl , float4(v.pos,1)).xyz;
+
+
+  float audioForce = _LoopbackBuffer[i * 10] *_LoopbackBuffer[i * 10] * 10;
+
+
+      float3 dir = v.pos - tPos;
+
+      force +=10* normalize(dir) / (.01+ 20* pow( length(dir),3))  * audioForce;
+
+
+
+
+
+    }
+
+    /*for( int i = 0; i < _InterfaceCubeBuffer_COUNT; i++ ){
+      Transform t = _InterfaceCubeBuffer[i];
+      float3 center=  mul(t.ltw,float4(0,0,0,1)).xyz;
+      float3 dif = center - v.pos;
+
+      //force += normalize(dif) * 100;
+
+      float3 local = mul( t.wtl, float4(v.pos,1)).xyz;
+
+      float s = sdBox(local, float3(1,1,1));
+
+     // force += s * normalize(dif) * 50;
+
+
+    }*/
+
+
+    v.vel += force  * _DT;
+    v.pos += v.vel * _DT;
+    v.vel *= .93;
+
+    v.nor       = normalize(anchorNormal + v.vel * .1);
+    v.tangent   = normalize(mul( _Transform , float4( b.tangent , 0).xyz));;
+    v.uv        = b.uv;
+
+    v.debug.x = length(anchorPosition - v.pos);
+
+    _VertBuffer[sID] = v;
+
+  }else{
+
+
+  }
+
+}

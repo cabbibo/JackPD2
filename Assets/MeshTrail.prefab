@@ -1,0 +1,354 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7982050938558757618
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5724495940285958056}
+  - component: {fileID: 2298516711406458977}
+  - component: {fileID: 1868564763348105490}
+  - component: {fileID: 4557392007822913844}
+  - component: {fileID: 8842671094591387823}
+  - component: {fileID: 6132777967993060887}
+  - component: {fileID: 7868741194774254052}
+  - component: {fileID: 1522507478542560521}
+  m_Layer: 0
+  m_Name: MeshTrail
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5724495940285958056
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7982050938558757618}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2298516711406458977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7982050938558757618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 418986b4c4494bf43b747a73d4a5c777, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 1
+  begunGestation: 1
+  gestating: 0
+  gestated: 1
+  begunBirth: 1
+  birthing: 0
+  birthed: 1
+  begunLive: 1
+  living: 1
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 0
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles:
+  - {fileID: 1868564763348105490}
+  - {fileID: 4557392007822913844}
+  - {fileID: 7868741194774254052}
+  - {fileID: 1522507478542560521}
+  verts: {fileID: 8842671094591387823}
+  triangles: {fileID: 6132777967993060887}
+  transfer: {fileID: 4557392007822913844}
+  body: {fileID: 1868564763348105490}
+  showBody: 1
+  skeleton: {fileID: 0}
+  radius: 2.23
+  transformArray:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  binders:
+  - {fileID: 7868741194774254052}
+  - {fileID: 1522507478542560521}
+  meshLength: 10
+  baseVerts: {fileID: 0}
+  direction: 100
+--- !u!114 &1868564763348105490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7982050938558757618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4c7fa692e4cc426aa37fba780fcae78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 1
+  begunGestation: 1
+  gestating: 0
+  gestated: 1
+  begunBirth: 1
+  birthing: 0
+  birthed: 1
+  begunLive: 1
+  living: 1
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 0
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles:
+  - {fileID: 8842671094591387823}
+  - {fileID: 6132777967993060887}
+  verts: {fileID: 8842671094591387823}
+  triangles: {fileID: 6132777967993060887}
+  material: {fileID: 2100000, guid: 899fd595fcf5a1045a6675b85ab68085, type: 2}
+  debugMaterial: {fileID: 0}
+  blockRender: 0
+--- !u!114 &4557392007822913844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7982050938558757618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521ed2d62d2034941a1197389f9c70d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 1
+  begunGestation: 1
+  gestating: 0
+  gestated: 1
+  begunBirth: 1
+  birthing: 0
+  birthed: 1
+  begunLive: 1
+  living: 1
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 0
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  selfStop: 0
+  primaryName: _VertBuffer
+  primaryForm: {fileID: 8842671094591387823}
+  shader: {fileID: 7200000, guid: e86f38b549802fd45a89e57a884b8a02, type: 3}
+  kernelName: PerTrailTransfer
+  countMultiplier: 1
+  kernel: 0
+  executionTime: 0
+  definedGroups: 0
+  definedGroupsX: 0
+  definedGroupsY: 0
+  definedGroupsZ: 0
+--- !u!114 &8842671094591387823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7982050938558757618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c54e73204fda47e42a80ee06a69663ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 1
+  begunGestation: 1
+  gestating: 0
+  gestated: 1
+  begunBirth: 1
+  birthing: 0
+  birthed: 1
+  begunLive: 1
+  living: 1
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 0
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  count: 135600
+  saveName: entity8638127
+  alwaysRemake: 1
+  intBuffer: 0
+  structSize: 16
+  description: 
+  timeToCreate: 0
+  totalMemory: 0
+  debugMaterial: {fileID: 2100000, guid: bfdba931e444ed946a647d01a3fac6e5, type: 2}
+  loadedFromFile: 0
+  verts: {fileID: 0}
+  Base: {fileID: 0}
+  numMesh: 600
+  vertsPerMesh: 226
+  countMultiplier: 1
+--- !u!114 &6132777967993060887
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7982050938558757618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6395561f40782d4287b7781eb7a6315, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 1
+  begunGestation: 1
+  gestating: 0
+  gestated: 1
+  begunBirth: 1
+  birthing: 0
+  birthed: 1
+  begunLive: 1
+  living: 1
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 0
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  count: 298800
+  saveName: entity1642678
+  alwaysRemake: 1
+  intBuffer: 1
+  structSize: 1
+  description: 
+  timeToCreate: 0
+  totalMemory: 0
+  debugMaterial: {fileID: 0}
+  loadedFromFile: 0
+  toIndex: {fileID: 8842671094591387823}
+  tris: {fileID: 0}
+  numMesh: 600
+  vertsPerMesh: 226
+  trisPerMesh: 498
+--- !u!114 &7868741194774254052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7982050938558757618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec4fb00d90ed33946b0782c54920be83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 1
+  begunGestation: 1
+  gestating: 0
+  gestated: 1
+  begunBirth: 1
+  birthing: 0
+  birthed: 1
+  begunLive: 1
+  living: 1
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 0
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  toBind: {fileID: 4557392007822913844}
+  playback: {fileID: 0}
+  power: 1
+  multiplier: 1000
+--- !u!114 &1522507478542560521
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7982050938558757618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 094a8257296e9254793407c033d20aea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  created: 1
+  begunGestation: 1
+  gestating: 0
+  gestated: 1
+  begunBirth: 1
+  birthing: 0
+  birthed: 1
+  begunLive: 1
+  living: 1
+  lived: 0
+  begunDeath: 0
+  dying: 0
+  died: 0
+  destroyed: 0
+  debug: 0
+  active: 1
+  executionID: 0
+  parent: {fileID: 0}
+  data: {fileID: 0}
+  Cycles: []
+  toBind: {fileID: 4557392007822913844}
+  nameInBuffer: _AmountShown
+  boundFloat: -0.1

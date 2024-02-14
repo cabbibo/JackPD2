@@ -1,0 +1,987 @@
+#pragma kernel Flow
+#pragma kernel Flow2
+#pragma kernel Flow3
+#pragma kernel Flow4
+#pragma kernel Flow4_1
+#pragma kernel Flow4_2
+#pragma kernel Flow5
+#pragma kernel Flow6
+#pragma kernel Flow7
+#pragma kernel Flow8
+#pragma kernel Flow9
+
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float value;
+  float life;
+};
+
+float4x4 _Transform;
+
+RWStructuredBuffer<Vert> _VertBuffer;
+
+int _VertBuffer_COUNT;
+int _TransformBuffer_COUNT;
+
+#include "../../Chunks/safeID.cginc"
+#include "../../Chunks/snoise.cginc"
+#include "../../Chunks/hash.cginc"
+#include "../../Chunks/curlNoise.cginc"
+#include "../../Chunks/ParticleAxisHelpers.cginc"
+
+
+float _OSCValue;
+float _OSCID;
+float _DT;
+float _Time;
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+  float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+    x  *= .01;
+    y *= .01;
+   vert.pos=  float3( x,y, -_OSCValue * 2 *  (.1 +.9* hash(float(pID * 1010))));
+   vert.pos += float3(_OSCID-6,0,0);
+
+  //  vert.pos = DoRemitPosition(pID);
+    x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    
+    
+    vert.vel  = 0;// float3(x * .01,y * .01,0) * _OSCValue * .1;//  * (.1 +.9* hash(float(pID * 1010)));
+    
+    vert.life = 1;//
+
+vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+    force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+    force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+    //vert.pos *float3(1,1,0);
+    //force += 20*float3(x,y,0)*pow((1-vert.life),2);
+
+    //force += float3(0,0,2);
+
+    force *= .0001;
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .001 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow2(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+  float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+ 
+   vert.pos =  float3(x,y,0);//float3( x * 10,y * 10,0 );//mul( _Transform, float4( x,y,0,1)).xyz;
+
+  //  vert.pos = DoRemitPosition(pID);
+   //x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //
+   //
+   //vert.vel  = float3(x * .02,y * .02,-1) * _OSCValue * .1;
+   //
+    vert.life = 1;//
+
+    vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+   // force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+   // force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    force += 2*float3(x,y,0);
+
+    force += float3(0,0,1);
+
+    force *= .0001;
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .001 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow3(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+  float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+ 
+   vert.pos =  float3(x,y,-4) * 2;//float3( x * 10,y * 10,0 );//mul( _Transform, float4( x,y,0,1)).xyz;
+
+  //  vert.pos = DoRemitPosition(pID);
+   //x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //
+   //
+   //vert.vel  = float3(x * .02,y * .02,-1) * _OSCValue * .1;
+   //
+    vert.life = 1;//
+
+    vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+    force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+    force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   // force += 2*float3(x,y,0);
+
+    force += float3(0,0,2);
+
+
+float3 p = cross(vert.pos * float3(1,1,0) , float3(0,0,1));
+force +=  p* 2;
+force -= vert.pos * float3(1,1,0) * 1.1;
+    force *= .0001;
+
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .001 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow4(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+  float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+ 
+   vert.pos =  float3(x,y,-5) * 2;//float3( x * 10,y * 10,0 );//mul( _Transform, float4( x,y,0,1)).xyz;
+
+  //  vert.pos = DoRemitPosition(pID);
+   //x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //
+   //
+   //vert.vel  = float3(x * .02,y * .02,-1) * _OSCValue * .1;
+   //
+    vert.life = 1;//
+
+    vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+    force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+    force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   // force += 2*float3(x,y,0);
+
+    force -= float3(0,0,2);
+
+
+float3 p = cross(vert.pos * float3(1,1,0) , float3(0,0,1));
+force +=  p* 2;
+force -= vert.pos * float3(1,1,0) * 1.1;
+    force *= .0001;
+
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .001 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow4_1(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+  float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+ 
+   vert.pos =  float3(x,y,-5.5) * 2;//float3( x * 10,y * 10,0 );//mul( _Transform, float4( x,y,0,1)).xyz;
+
+  //  vert.pos = DoRemitPosition(pID);
+   //x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //
+   //
+   //vert.vel  = float3(x * .02,y * .02,-1) * _OSCValue * .1;
+   //
+    vert.life = 1;//
+
+    vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+    force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+    force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   // force += 2*float3(x,y,0);
+
+    force -= float3(0,0,2);
+
+
+float3 p = cross(vert.pos * float3(1,1,0) , float3(0,0,1));
+force +=  p* 2;
+force -= vert.pos * float3(1,1,0) * 1.1;
+    force *= .0001;
+
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .001 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow4_2(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+  float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+ 
+   vert.pos =  float3(x,y,-6) * 2;//float3( x * 10,y * 10,0 );//mul( _Transform, float4( x,y,0,1)).xyz;
+
+  //  vert.pos = DoRemitPosition(pID);
+   //x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //
+   //
+   //vert.vel  = float3(x * .02,y * .02,-1) * _OSCValue * .1;
+   //
+    vert.life = 1;//
+
+    vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+    force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+    force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   // force += 2*float3(x,y,0);
+
+    force -= float3(0,0,2);
+
+
+float3 p = cross(vert.pos * float3(1,1,0) , float3(0,0,1));
+force +=  p* 2;
+force -= vert.pos * float3(1,1,0) * 1.1;
+    force *= .0001;
+
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .001 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow5(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+  float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+ 
+   vert.pos =  float3(x,y,-.5) * 3;//float3( x * 10,y * 10,0 );//mul( _Transform, float4( x,y,0,1)).xyz;
+
+  //  vert.pos = DoRemitPosition(pID);
+   //x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //
+   //
+   //vert.vel  = float3(x * .02,y * .02,-1) * _OSCValue * .1;
+   //
+    vert.life = 1;//
+
+    vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+    force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+    force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   // force += 2*float3(x,y,0);
+
+    //force -= float3(0,0,2);
+
+
+float3 p = cross(vert.pos * float3(1,1,0) , float3(0,0,1));
+force +=  p* 2;
+force -= vert.pos * float3(1,1,0) * 1.1;
+    force *= .0001;
+
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .001 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+
+
+
+
+
+
+
+[numthreads(NR_THREADS,1,1)]
+void Flow6(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+  float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+    x  *= .01;
+    y *= .01;
+   vert.pos= mul( _Transform, float4( x,y,0,1)).xyz;
+
+  //  vert.pos = DoRemitPosition(pID);
+    x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    
+    
+    vert.vel  = float3(x * .02,y * .02,0) * _OSCValue * .1  * (.2 +.8* hash(float(pID * 1010)));
+    
+    vert.life = 1;//
+
+vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+    force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+    force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+    //vert.pos *float3(1,1,0);
+    force += 10*float3(x,y,0);
+
+    force += float3(0,0,-2);
+
+    force *= .0001;
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .001 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+
+
+
+
+[numthreads(NR_THREADS,1,1)]
+void Flow7(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+  float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+    x *= 1;
+    y *=1;
+   vert.pos=float3( x,y,2) * 2;//,1)).xyz;
+
+  //  vert.pos = DoRemitPosition(pID);
+    x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    
+    
+    vert.vel  = float3(x * .02,y * .02,0) * _OSCValue * .1  * (.2 +.8* hash(float(pID * 1010)));
+    
+    vert.life = 1;//
+
+vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+    force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+    force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+    //vert.pos *float3(1,1,0);
+    force += 10*float3(x,y,0);
+
+    force += float3(0,0,-2);
+
+    force *= .0001;
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .001 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+
+[numthreads(NR_THREADS,1,1)]
+void Flow8(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+
+    float a  = _OSCValue +.2 * hash(float(pID));
+   float x = sin(a *4 * 3.14159);
+    float y = -cos(a *4 * 3.14159);
+
+    x *= .5;
+    y *=.5;
+   vert.pos=float3( x,y,-_OSCValue * .2-5) * 2;//,1)).xyz;
+
+  //  vert.pos = DoRemitPosition(pID);
+   
+    
+    vert.vel  = float3(x * .4,y * .4,0) * _OSCValue * .1  * (.2 +.8* hash(float(pID * 1010)));
+    
+    vert.life = 1;//
+
+vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+    force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+    force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+   // float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   // float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   
+   float a  = vert.value +.2 * hash(float(pID));
+   float x = sin(a *4 * 3.14159);
+    float y = -cos(a *4 * 3.14159);
+
+    //vert.pos *float3(1,1,0);
+    force -= 2*float3(x,y,0);
+    force  -= vert.pos * float3(1,1,0) * 13;
+
+    force += float3(0,0,-3);
+
+    force *= .0001;
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .003 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow9(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+     vert.life = hash(float(pID));
+  }
+  
+  /*if( vert.life == 0 ){ vert.life = hash(float(pID));}
+  if( length(vert.axis) == 0 ){ vert.axis = newAxis(float(pID)); }
+  
+  vert.nor = mul(rotation(vert.axis,vert.life*10*(hash(float(pID*123))+1)),float4(0,0,1,0)).xyz;*/
+
+  if( vert.life < 0 ){
+  float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+ 
+   vert.pos =  float3(x,y,-.0) * 3;//float3( x * 10,y * 10,0 );//mul( _Transform, float4( x,y,0,1)).xyz;
+
+  //  vert.pos = DoRemitPosition(pID);
+   //x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   //
+   //
+   //vert.vel  = float3(x * .02,y * .02,-1) * _OSCValue * .1;
+   //
+    vert.life = 1;//
+
+    vert.value = _OSCValue;
+  
+  }else{
+
+   
+      float3 force = 0;
+    force += 1.3*curlNoise(vert.pos * 1.4 + float3(0,0,_Time * .1));
+    force += 2.3*curlNoise(vert.pos * .4 + float3(0,0,_Time * .1));
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+   // force += 2*float3(x,y,0);
+
+    //force -= float3(0,0,2);
+
+
+float3 p = cross(vert.pos * float3(1,1,0) , float3(0,0,1));
+force +=  p* 2;
+force -= vert.pos * float3(1,1,0) * 1.1;
+    force *= .0001;
+
+
+
+
+    vert.vel += force * (_OSCValue * 2 + .2);/// * .00004 * (1+hash(pID*1021.))/2;
+
+  float er = _OSCValue;
+    if( _OSCValue < .001 ){
+        er = 0;
+    }
+
+       vert.life -= (er+ .3) * .001 * (3+sin(float(pID)));;//.0004 * (3+sin(float(pID)));
+   
+   
+   
+    vert.pos += vert.vel ;// vert.vel * a * .1;
+
+    vert.vel *=.98;
+
+  }
+
+
+    
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+

@@ -1,0 +1,83 @@
+﻿#pragma kernel Place
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tang;
+  float2 uv;
+  float2 debug;
+};
+
+
+struct Particle{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tan;
+  float2 uv;
+  float used;
+  float3 triIDs;
+  float3 triWeights;
+  float3 debug;
+};
+
+
+
+float _Time;
+
+RWStructuredBuffer<Vert> _VertBuffer;
+RWStructuredBuffer<Particle> _BaseBuffer;
+int _VertBuffer_COUNT;
+int _BaseBuffer_COUNT;
+
+float _StemDistance;
+
+#include "../../Chunks/safeID.cginc"
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Place(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+
+
+  
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+  if( pID < _VertBuffer_COUNT ){
+
+
+
+  // todo spectrum Based;
+  float3 anchorPos = _BaseBuffer[pID].pos + _BaseBuffer[pID].nor * .5;
+
+    Vert v = _VertBuffer[ sID ];
+
+  // float3 dist = v.pos  - _DisformerPosition;///_DisformerPosition;
+
+
+    float3 force = 0;
+
+    force += (anchorPos - v.pos)*5;
+   // force += (-normalize(dist) )*.3;
+
+
+  
+    v.vel += force * .0001 ;
+    v.pos += v.vel;
+    v.vel *= .99;
+    
+//    v.uv        = b.uv;
+
+    _VertBuffer[sID] = v;
+
+  }else{
+
+
+  }
+
+
+
+}

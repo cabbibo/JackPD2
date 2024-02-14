@@ -1,0 +1,171 @@
+﻿
+#pragma kernel PerTrailTransfer
+
+struct Vert{
+    float3 pos;
+    float3 vel;
+    float3 nor;
+    float3 tangent;
+    float2 uv;
+    float2 debug;
+};
+
+
+RWStructuredBuffer<Vert> _VertBuffer;
+RWStructuredBuffer<Vert> _BaseBuffer;
+RWStructuredBuffer<Vert> _SkeletonBuffer;
+
+int _BaseBuffer_COUNT;
+int _VertBuffer_COUNT;
+int _SkeletonBuffer_COUNT;
+
+
+
+int _NumVertsPerTrail;
+int _NumVertsPerMesh;
+int _NumVertsPerHair;
+
+float _Radius;
+int _Direction;
+
+float _ModelLength;
+
+float3 _CameraForward;
+float3 _CameraRight;
+float3 _CameraUp;
+
+
+float _FullScale;
+
+float _AmountShown;
+
+#include "Assets/Shaders/Chunks/cubicCurve.cginc"
+#include "Assets/Shaders/Chunks/safeID.cginc"
+#include "Assets/Shaders/Chunks/hash.cginc"
+#include "Assets/Shaders/Chunks/BibPit.cginc"
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void PerTrailTransfer (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+    int pID = threadID + u3GroupID.x * NR_THREADS;
+
+
+    int inTrailID = pID / _NumVertsPerMesh;
+    int vertID = pID % _NumVertsPerMesh;
+    int trailID = inTrailID / _NumVertsPerTrail;
+    inTrailID = inTrailID % _NumVertsPerTrail;
+
+
+    float val = float(inTrailID)/_NumVertsPerTrail;
+
+
+    Vert baseVert  = _BaseBuffer[ safeID(vertID , _BaseBuffer_COUNT) ];
+
+
+
+
+    //val = baseVert.pos.y / _ModelLength;
+    Vert trailParticle  = _SkeletonBuffer[ safeID(inTrailID + _NumVertsPerTrail * trailID, _SkeletonBuffer_COUNT) ];
+    Vert tip  = _SkeletonBuffer[ safeID(_NumVertsPerTrail * trailID , _SkeletonBuffer_COUNT) ];
+    Vert head  = _SkeletonBuffer[ safeID(_NumVertsPerTrail * trailID +(_NumVertsPerTrail-1), _SkeletonBuffer_COUNT) ];
+    
+    float3 pos = trailParticle.pos;
+    float3 trailPos = trailParticle.pos;
+
+
+    float3 zDir = normalize(trailParticle.vel);//-normalize(cross(trailParticle.nor,trailParticle.tangent));
+    float3 yDir = trailParticle.tangent;
+    float3 xDir = trailParticle.nor;
+
+    float3 c1 = float3( xDir.x , yDir.x , zDir.x );
+    float3 c2 = float3( xDir.y , yDir.y , zDir.y );
+    float3 c3 = float3( xDir.z , yDir.z , zDir.z );
+
+    float3x3 rotMat = float3x3(c1,c2,c3);
+
+  float d = 1;
+    if( val  > _AmountShown ){
+
+    d = 1-saturate(10 * (val - _AmountShown));
+
+
+   }
+
+   //val = 1;
+   //d = 1;
+
+
+    pos += mul(rotMat,baseVert.pos) * _Radius  * min(val*4, 1-val) * d; 
+
+
+    float2 fUV =baseVert.uv;
+        //if( baseParticle.debug.x < 1 ){ fPos  = 0;}
+     float3 fNor = normalize(mul(rotMat,baseVert.nor));
+    float3 fTan = normalize(mul(rotMat,baseVert.tangent));
+
+    int sID = safeID( pID , _VertBuffer_COUNT );
+    Vert v = _VertBuffer[sID];
+
+
+    float3 targetPos = pos;
+
+    float3 force = 0;
+
+    if( length(targetPos) < 300 && length(targetPos) > 0 ){
+      force += -(v.pos - targetPos) * 3;
+    }
+  
+    force += -(v.pos - targetPos);
+
+  // force += sampleAudio(val  * 1 + sin(float(trailID)) * .2 + .2) * baseVert.nor * d;
+
+    if( length(baseVert.nor) > 0 && length(baseVert.nor) < 1000  ){
+      //force += fNor * sampleAudio( val ) * .01;
+    }
+
+   // force += float3(0,1,0);
+   // force += -(v.pos - targetPos);
+
+   
+
+  if( length( v.pos - targetPos) > 10){
+      v.pos = targetPos;
+      v.vel = 0;
+      force = 0;
+    }
+
+  v.vel += force * .0001;
+
+  if( length(v.vel) > 1 ){
+    v.vel = normalize(v.vel) * 1;
+  }
+
+  if( length(v.vel) < .0001 ){
+    v.vel = float3(1,0,0);
+  }
+
+
+  v.vel *= .7;
+  v.pos += v.vel;
+
+
+  v.pos = targetPos;
+
+    
+
+if( trailID == 0 ){
+  //v.pos = 1000;
+}
+   
+
+
+
+
+    v.uv = fUV;
+    v.debug = float2(val,float( trailID));
+    v.nor = fNor;//normalize(tang);
+    v.tangent = trailPos;//nor;// * ((float(pID)%2)-.5); //-normalize(cross(nor,tang));
+    _VertBuffer[sID] = v;
+
+}

@@ -1,0 +1,185 @@
+﻿#pragma kernel Bop
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float2 debug;
+};
+
+float4x4 _Transform;
+
+struct Transform{
+  float4x4  ltw;
+  float4x4  wtl;
+};
+
+RWStructuredBuffer<Vert> _VertBuffer;
+RWStructuredBuffer<Vert> _SkeletonBuffer;
+RWStructuredBuffer<Transform> _TransformBuffer;
+RWStructuredBuffer<float> _LoopbackBuffer;
+
+int _VertBuffer_COUNT;
+int _SkeletonBuffer_COUNT;
+int _TransformBuffer_COUNT;
+
+
+/*
+RWStructuredBuffer<Transform> _InterfaceCubeBuffer;
+int _InterfaceCubeBuffer_COUNT;*/
+
+int _LoopbackBuffer_COUNT;
+
+#include "../../Chunks/safeID.cginc"
+#include "../../Chunks/snoise.cginc"
+#include "../../Chunks/curlNoise.cginc"
+
+
+
+
+Texture2D<float4> _AudioMap;
+SamplerState sampler_AudioMap;
+float _AudioTime;
+float _NormalizedAudioID;
+float _NumAudio;
+float _AudioID;
+
+RWStructuredBuffer<float4> _AudioBuffer;
+
+int _AudioBuffer_COUNT;
+
+
+
+float sdBox( float3 p, float3 b )
+{
+  float3 d = abs(p) - b;
+  return min(max(d.x,max(d.y,d.z)),0.0) +
+         length(max(d,0.0));
+}
+
+float _DT;
+float _Time;
+
+float3 hash31(float p)
+{
+   float3 p3 = frac(float3(p,p,p) * float3(.1031, .1030, .0973));
+   p3 += dot(p3, p3.yzx+33.33);
+   return frac((p3.xxy+p3.yzz)*p3.zyx); 
+}
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Bop (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+  if( pID < _VertBuffer_COUNT ){
+
+    Vert b = _SkeletonBuffer[safeID( pID , _SkeletonBuffer_COUNT )];
+
+
+    float3 anchorPosition =  mul( _Transform , float4( b.pos , 1)).xyz;
+    float3 anchorNormal = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+
+    Vert v = _VertBuffer[ sID ];
+
+    float3 force = 0;
+
+    force += (anchorPosition - v.pos) * .1;
+
+    float4 a;
+
+    float3 audioColor = 0;
+    for( float i = 0; i < .5; i += .1){
+
+
+
+      float3 position = curlNoise( hash31(i* 2110 + 100 * _AudioID) + float3(0,0,_Time * .3));
+
+      position -= .5;
+    
+      position = normalize(position) * 2;
+
+      float3 dif = v.pos - position;
+
+
+      a = _AudioMap.SampleLevel(sampler_AudioMap, float2( i * .2, _AudioTime),0);//* vert.axis.x;
+
+    if( length(a) > 0.2){
+      //force +=length(a) * length(a) * 10 * 1* 11.3*normalize(dif)/ (.4+101.1*length(dif));//-length(a) * length(a) * 1 * normalize(dif) * -11.04 / (.4+11.1*length(dif));
+    } 
+
+    force += -20*length(a) * normalize(dif) / (3.1+length(dif));
+    audioColor += pow(a.xyz,2) * 100  / (1.1+length(dif));
+    
+    }
+
+    v.tangent = audioColor;
+    /*for( int i = 0; i < _TransformBuffer_COUNT; i++ ){
+      
+      float4x4 wtl = _TransformBuffer[i].wtl;
+      float4x4 ltw = _TransformBuffer[i].ltw;
+
+      float3 tPos = mul( ltw , float4( 0,0,0, 1 ) ).xyz;
+
+
+
+
+      //float3 lPos = mul( wtl , float4(v.pos,1)).xyz;
+
+
+  float audioForce = _LoopbackBuffer[i * 10] *_LoopbackBuffer[i * 10] * 10;
+
+
+      float3 dir = v.pos - tPos;
+
+      force +=10* normalize(dir) / (.01+ 20* pow( length(dir),3))  * audioForce;
+
+
+
+
+
+    }*/
+
+    /*for( int i = 0; i < _InterfaceCubeBuffer_COUNT; i++ ){
+      Transform t = _InterfaceCubeBuffer[i];
+      float3 center=  mul(t.ltw,float4(0,0,0,1)).xyz;
+      float3 dif = center - v.pos;
+
+      //force += normalize(dif) * 100;
+
+      float3 local = mul( t.wtl, float4(v.pos,1)).xyz;
+
+      float s = sdBox(local, float3(1,1,1));
+
+     // force += s * normalize(dif) * 50;
+
+
+    }*/
+
+
+    v.vel += force  * .002;
+    v.pos += v.vel;
+    v.vel *= .99;
+
+    v.nor       = normalize(anchorNormal + v.vel * .1);
+    //v.tangent   = normalize(mul( _Transform , float4( b.tangent , 0).xyz));;
+    v.uv        = b.uv;
+
+    v.debug.x = length(anchorPosition - v.pos);
+    v.debug.y = abs(dot( normalize(anchorNormal) , float3(0,0,1)));
+    //v.debug.x = length(anchorPosition - v.pos);
+
+    _VertBuffer[sID] = v;
+
+  }else{
+
+
+  }
+
+}

@@ -1,0 +1,157 @@
+#pragma kernel Flow
+
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float2 debug;
+};
+
+float4x4 _Transform;
+
+RWStructuredBuffer<Vert> _VertBuffer;
+
+int _VertBuffer_COUNT;
+int _TransformBuffer_COUNT;
+
+#include "../../Chunks/safeID.cginc"
+#include "../../Chunks/snoise.cginc"
+#include "../../Chunks/hash.cginc"
+#include "../../Chunks/curlNoise.cginc"
+#include "../../Chunks/ParticleAxisHelpers.cginc"
+
+Texture2D<float4> _AudioMap;
+SamplerState sampler_AudioMap;
+float _AudioTime;
+float _NormalizedAudioID;
+float _NumAudio;
+float _AudioID;
+
+
+Texture3D<float4> _AudioMap3D;
+SamplerState linearClampSampler;
+
+
+RWStructuredBuffer<float4> _AudioBuffer;
+
+int _AudioBuffer_COUNT;
+
+
+
+
+float _Time;
+float4 a;
+float _DT;
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow(uint3 id : SV_DispatchThreadID) {
+
+    int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+  float fID = (float)id.x;
+
+  float baseID = floor( fID / 100 );
+  float remain = fID % 100;
+  vert.pos.x = fID %1024;
+  vert.pos.z = floor(baseID / 1024) + remain/100;
+
+  vert.tangent.x = vert.pos.x / 1024;
+  vert.tangent.y  = _AudioTime + ((remain/100) / 100);
+  vert.tangent.z =  ( floor(baseID / 1024) + .5)/ _NumAudio;
+
+  vert.pos.y = _AudioMap3D.SampleLevel(linearClampSampler,vert.tangent ,0).x  * (pow( vert.pos.x/1024 , 2 )*5 +.3) ;;
+
+
+  vert.debug.x = vert.pos.y;
+  vert.debug.y = remain/100;
+
+  vert.pos.x = vert.pos.x/1024;
+  vert.pos.z = remain/100 + floor(baseID / 1024) * .001 ;
+  //vert.pos.y = vert.pos.y * 10;
+
+
+
+
+/*
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+    vert.life = hash(float(pID))-1;
+    vert.axis = 0;
+
+  }
+  
+ float audioLookupVal = abs(sin((float(pID) / float(_VertBuffer_COUNT) ) *20000 * 3.14159)) * 1;
+  vert.axis.x = audioLookupVal;
+    a = _AudioMap.SampleLevel(sampler_AudioMap, float2( vert.axis.x , _AudioTime),0);//* vert.axis.x;
+
+
+  if( vert.life < 0 ){
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+
+    //vert.axis.x = (x+1)/2;
+   // vert.axis.y = (y+1)/2;
+
+    float r = .02;//*hash(float(pID) * 1000) * 3;
+
+    x *= r;
+    y *= r;
+
+    
+   float3 p = mul( _Transform, float4( x,y,0,1)).xyz;
+
+
+    vert.life += 1;//
+
+    
+    float3 curl = curlNoise(p * 11.1 + float3(0,0,_Time * .01));
+    float3 curl2 = curlNoise(p * 200.1 + float3(0,0,_Time * .01));
+
+
+    vert.pos = p + curl * .03 + curl2 * .01;
+    
+    vert.axis.x = audioLookupVal;
+    vert.axis.y = _AudioTime;
+    vert.axis.z = length(a);
+    vert.vel = length(a) * float3(0,0,-.01);
+  
+  }else{
+
+    float3 force = 0;
+
+    float3 curl = curlNoise(vert.pos * .5 + float3(0,0,_Time * .04));
+   force += .003*curl;
+
+    float x = sin((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    float y = -cos((float(pID) / float(_VertBuffer_COUNT) ) *4 * 3.14159);
+    force +=  float3(x,y,0) * .003;
+
+    vert.axis.x = audioLookupVal;
+
+    force *= (a * 3+.05);
+
+    vert.life -= .001 * (3+sin(float(pID)));
+
+    vert.vel += force * .1;
+    vert.pos += vert.vel ;// * _DT  * 60;// vert.vel * a * .1;
+
+    vert.vel *= .19;
+
+  }
+*/
+
+  
+  _VertBuffer[pID] = vert;
+}
+
+
+
+

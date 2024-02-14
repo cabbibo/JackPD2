@@ -1,0 +1,143 @@
+
+#pragma kernel spacePUPPY1
+
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float2 debug;
+};
+
+
+float _DT;
+
+float4x4 _Transform;
+
+struct Sphere{
+  float3 pos;
+  float3 vel;
+  float value;
+  float id;
+};
+
+RWStructuredBuffer<Vert> _VertBuffer;
+RWStructuredBuffer<Vert> _SkeletonBuffer;
+RWStructuredBuffer<Sphere> _SphereBuffer;
+
+
+
+
+
+
+int _VertBuffer_COUNT;
+int _SkeletonBuffer_COUNT;
+int _SphereBuffer_COUNT;
+
+float _Time;
+float3 _DisformerPosition;
+
+
+float _Force;
+float _Dampening;
+float _DisformerForce;
+#include "../../Chunks/safeID.cginc"
+
+
+
+
+float PHI = 1.61803398874989484820459 * 00000.1; // Golden Ratio   
+float PI  = 3.14159265358979323846264 * 00000.1; // PI
+float SQ2 = 1.41421356237309504880169 * 10000.0; // Square Root of Two
+
+float gold_noise(in float2 coordinate, in float seed){
+    return frac(tan(distance(coordinate*(seed+PHI), float2(PHI, PI)))*SQ2);
+}
+
+#include "../../Chunks/hash.cginc"
+#include "../../Chunks/snoise.cginc"
+#include "../../Chunks/curlNoise.cginc"
+
+
+RWStructuredBuffer<float4> _AudioBuffer;
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void spacePUPPY1(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID) {
+
+
+  int pID = threadID + u3GroupID.x * NR_THREADS;
+
+  int sID = safeID(pID, _VertBuffer_COUNT );
+
+  if( pID < _VertBuffer_COUNT ){
+
+    Vert b = _SkeletonBuffer[safeID( pID , _SkeletonBuffer_COUNT )];
+
+
+    float3 anchorPosition =  mul( _Transform , float4( b.pos , 1)).xyz;
+    float3 anchorNormal = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+
+
+    float anchorNoiseValue = (snoise( anchorPosition * .0001 )+1)/2;
+
+    anchorNoiseValue *= float(_SphereBuffer_COUNT);
+    anchorNoiseValue =  floor( anchorNoiseValue);
+    anchorNoiseValue /= float(_SphereBuffer_COUNT);
+
+    Vert v = _VertBuffer[ sID ];
+
+  // float3 dist = v.pos  - _DisformerPosition;///_DisformerPosition;
+
+
+    float3 force = 0;
+
+    force += (anchorPosition - v.pos)*1;
+   // force += (-normalize(dist) )*.3;
+
+    float3 center = mul( _Transform , float4( 0,0,0 , 1)).xyz;
+
+    force += curlNoise(v.pos * .0008 + float3(0,_Time * .5,0) ) * 30;
+
+    for( int i= 0; i < _SphereBuffer_COUNT; i++){
+
+
+      
+      float fi = float(i)/float(_SphereBuffer_COUNT);
+
+    //  if( fi == anchorNoiseValue){
+
+      float3 p = float3( hash(fi), hash(fi*44), hash(fi*12.3));
+
+      float3 cp = p * 1000 + center;
+
+        float3 dif = cp - v.pos;
+        force -=1000000*normalize(dif)*_SphereBuffer[i].value * _SphereBuffer[i].value /(.01 + 4.1 *length(dif));//  / (100+length(dif));
+    //  }
+
+    }
+
+    if( length(force ) > 100 ){
+      force = normalize(force) * 100;
+    }
+
+
+  
+  
+    v.vel += force * .001 ;
+    v.pos += v.vel;
+    v.vel *= .99;
+  
+    v.nor       = normalize(mul( _Transform , float4( b.nor , 0).xyz));
+    v.tangent   = normalize(mul( _Transform , float4( b.tangent , 0).xyz));;
+    v.uv        = b.uv;
+
+    _VertBuffer[sID] = v;
+
+  }else{
+
+
+  }
+
+}

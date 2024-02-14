@@ -1,0 +1,140 @@
+#pragma kernel Collision
+
+#include "../../Chunks/noise.cginc"
+#include "../../Chunks/snoise.cginc"
+#include "../../Chunks/curlNoise.cginc"
+
+
+struct Vert{
+  float3 pos;
+  float3 oPos;
+  float3 nor;
+  float3 tang;
+  float2 uv;
+  float2 debug;
+};
+
+RWStructuredBuffer<Vert> _VertBuffer;
+uint _VertBuffer_COUNT;
+
+
+
+struct Sphere {
+  float3 pos;
+  float3 vel;
+  float  debug;
+  float val;
+};
+RWStructuredBuffer<Sphere> _SphereBuffer;
+uint _SphereBuffer_COUNT;
+
+
+
+int _NumVertsX;
+int _NumVertsY;
+
+
+float _Time;
+
+#include "../../Chunks/safeID.cginc"
+
+float3 getVel( float3 p1 , float3 p2 ){
+
+  float3 v = p1 - p2;
+
+  if( length( v ) > .5){ v = normalize( v ) *.5; }
+  return v;
+  
+}
+
+#define NR_THREADS 128
+
+[numthreads(NR_THREADS,1,1)]
+void Collision (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID, uint3 id : SV_DispatchThreadID) {
+
+  uint pID = id.x;
+  if( pID < _VertBuffer_COUNT){
+
+    pID = safeID( pID , _VertBuffer_COUNT );
+    Vert vert = _VertBuffer[pID];
+
+    float3 force = 0;
+    //float3 force = float3(0,-10.4,0);
+
+
+for( int i = 0; i < _SphereBuffer_COUNT; i++ ){
+
+    float inVal = float(i)/float(_SphereBuffer_COUNT);
+    float inVal2 = float(i+1)/float(_SphereBuffer_COUNT);
+
+
+    //if( vert.uv.x > inVal && vert.uv.x < inVal2){
+        Sphere s = _SphereBuffer[i];
+        float3 delta = s.pos - vert.pos;
+
+//        force += normalize(delta) * 100 * s.val * s.val;
+
+        if( length(delta) < 1000  && length(delta)> 0){
+            force -= normalize(delta) * -10 / length(delta)* s.val * s.val;
+        }
+    //}
+
+}
+
+
+
+    bool tb = false;
+
+    float size = 100;
+
+
+
+   // force += (vert.pos - float3((vert.uv.x-.5) * size *2, (vert.uv.y-.5) * size*2 , 0)) * -.01;
+    /*if( vert.uv.x < .001 &&  vert.uv.y < .001){
+      vert.pos = float3( -size,size , 0);
+        vert.oPos = vert.pos;
+
+    }
+
+    if( vert.uv.x > .99 &&  vert.uv.y < .001){
+        vert.pos = float3( size,size , 0);
+        vert.oPos = vert.pos;
+    }
+
+
+        if( vert.uv.x < .001 &&  vert.uv.y > .99){
+      vert.pos = float3( -size,-size , 0);
+        vert.oPos = vert.pos;
+
+    }
+
+    if( vert.uv.x > .99 &&  vert.uv.y > .99){
+        vert.pos = float3( size,-size , 0);
+        vert.oPos = vert.pos;
+    }*/
+    // Inertia: objects in motion stay in motion.
+    float3 vel = getVel( vert.pos , vert.oPos);
+
+    if( length( force ) > 1000 ){
+      force = normalize(force) * 1000;
+    }
+ 
+
+
+
+    if(tb == false ){
+
+      float dampening =.99;//_Dampening;//.99999;// - vert.life * .01;
+      float3 next = vert.pos + vel  * dampening+ force * .0001;
+
+      vert.oPos = vert.pos;
+      vert.pos = next;
+
+    }
+
+    _VertBuffer[pID] = vert;
+
+  }
+  
+}
+
