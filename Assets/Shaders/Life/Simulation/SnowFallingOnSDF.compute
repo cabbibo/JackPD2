@@ -1,0 +1,123 @@
+﻿#pragma kernel Flow
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float locked;
+  float debug;
+};
+
+float4x4 _Transform;
+
+RWStructuredBuffer<Vert> _VertBuffer;
+
+int _VertBuffer_COUNT;
+int _TransformBuffer_COUNT;
+
+#include "../../Chunks/safeID.cginc"
+#include "../../Chunks/snoise.cginc"
+#include "../../Chunks/hash.cginc"
+#include "../../Chunks/curlNoise.cginc"
+
+float3 _Dimensions;
+float3 _Extents;
+float3 _Center;
+
+float4x4 _SDFTransform;
+float4x4 _SDFInverseTransform;
+
+Texture3D<float4> _SDFTexture;
+SamplerState _LinearClamp;
+
+struct SDF{
+    float dist;
+    float3 nor;
+};
+
+float _Time;
+
+SDF GetSDFInfo(float3 p ){
+
+    float3 tPos = mul( _SDFInverseTransform ,float4(p,1));
+    tPos -= _Center;
+    tPos /= _Extents;
+
+    tPos += 1;
+    tPos /= 2;
+
+    float4 t = _SDFTexture.SampleLevel(_LinearClamp,tPos , 0);
+
+
+    SDF s;
+    s.dist = t.x;
+    s.nor = t.yzw;
+
+    return s;
+
+
+}
+
+
+
+// Hash function
+float2 hash2(float p)
+{
+    float3 p3 = frac(float3(p,p,p) * float3(.1031, .11369, .13787));
+    p3 += dot(p3, p3.yzx + 19.19);
+    return frac((p3.xx + p3.yz) * p3.zy);
+}
+
+float3 DoRemitPosition(int p){
+
+    float fP = float(p)+ _Time * 100;
+   return mul( _Transform, float4( hash2(fP*20+ _Time + hash(fP * 12) ).x-.5,hash2(fP * 31 + _Time+  hash(fP * 112)).y-.5 , hash2(fP * 121.+ _Time +  hash(fP * 212)).y-.5,1)).xyz;
+}
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Flow(uint3 id : SV_DispatchThreadID) {
+     int pID = id.x;
+  pID = safeID(pID,_VertBuffer_COUNT);
+  Vert vert = _VertBuffer[pID];
+
+
+  if( vert.pos.x == 0  && vert.pos.y == 0 && vert.pos.z == 0 ){
+    vert.pos = DoRemitPosition(pID);
+  }
+  
+
+
+
+   if( vert.locked < .5 ){
+
+        float3 force = float3(0,-1,0);
+        vert.vel += force  * .001;
+
+        vert.pos += vert.vel;
+
+        vert.vel *= .97;
+
+        SDF s = GetSDFInfo( vert.pos );
+
+        if( s.dist < 1 ){
+            vert.locked = 1;
+        }
+
+        if( vert.pos.y < -4 ){
+            vert.pos = DoRemitPosition(pID);
+        }
+
+    }else{
+
+    }
+
+
+
+  
+  _VertBuffer[pID] = vert;
+}

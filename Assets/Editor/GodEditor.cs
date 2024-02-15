@@ -5,6 +5,10 @@ using IMMATERIA;
 [CustomEditor(typeof(God))]
 public class GodEditor : Editor 
 {  
+
+    
+
+
    public override void OnInspectorGUI()
     {
        

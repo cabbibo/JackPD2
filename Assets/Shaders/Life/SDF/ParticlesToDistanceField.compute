@@ -1,0 +1,107 @@
+﻿#pragma kernel SetBuffer
+
+struct Vert{
+  float3 pos;
+  float3 vel;
+  float3 nor;
+  float3 tangent;
+  float2 uv;
+  float locked;
+  float debug;
+};
+
+float4x4 _Transform;
+
+struct SDF{
+    float dist;
+    float3 nor;
+};
+
+RWStructuredBuffer<Vert> _VertBuffer;
+RWStructuredBuffer<SDF> _VolumeBuffer;
+
+int _VertBuffer_COUNT;
+int _VolumeBuffer_COUNT;
+
+#include "../../Chunks/safeID.cginc"
+#include "../../Chunks/snoise.cginc"
+#include "../../Chunks/hash.cginc"
+#include "../../Chunks/curlNoise.cginc"
+
+float3 _Dimensions;
+float3 _Extents;
+float3 _Center;
+
+float4x4 _SDFTransform;
+float4x4 _SDFInverseTransform;
+
+Texture3D<float4> _SDFTexture;
+SamplerState _LinearClamp;
+
+float _Time;
+
+
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void SetBuffer(uint3 id : SV_DispatchThreadID) {
+  
+  
+  int pID = id.x;
+  pID = safeID(pID,_VolumeBuffer_COUNT);
+  SDF sdf = _VolumeBuffer[pID];
+  
+  
+  uint xID = pID % _Dimensions.x;
+  uint yID = (pID / _Dimensions.x) % _Dimensions.y;
+  uint zID = pID / (_Dimensions.x * _Dimensions.y);
+
+  float x = float(xID) / _Dimensions.x;
+  float y = float(yID) / _Dimensions.y;
+  float z = float(zID) / _Dimensions.z;
+
+
+
+  // cell position
+
+  float3 tmpPos = float3(x,y,z)-float3(.5 , .5 , .5);
+
+  tmpPos *= 2;
+  tmpPos *= _Extents;
+  tmpPos += _Center;
+
+  tmpPos = mul( _Transform , float4(tmpPos ,1)).xyz;
+  float3 p = tmpPos;
+
+  sdf.dist = 10000;
+  sdf.nor = float3(0,1,0);
+
+  if(_VertBuffer[pID].locked > .5){
+   // sdf.dist = 1;
+   // sdf.nor = float3(1,0,0);
+  }
+
+  for( int i = 0; i< _VertBuffer_COUNT; i++ ){
+    // get distance to each individual point;
+    // if its smaller than our minimum current distance, give us a new one
+
+    float3 d = p - _VertBuffer[i].pos;
+
+    if( _VertBuffer[i].locked > .5 ){
+
+    if( length(d) < sdf.dist){
+      sdf.dist = length(d);
+      sdf.nor = normalize(d);
+    }
+    }
+
+  }
+
+  
+  _VolumeBuffer[pID] = sdf;
+
+
+}

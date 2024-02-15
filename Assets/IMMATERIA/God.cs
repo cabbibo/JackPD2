@@ -20,6 +20,7 @@ namespace IMMATERIA
         public List<Life> lifes;
         public List<Binder> binders;
 
+
         public override void Create()
         {
 

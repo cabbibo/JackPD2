@@ -116,7 +116,7 @@ float3 DoRemitPosition(int p){
     float v = float(idInTrail) / float(_ParticlesPerTrail);
 
 
-   return _HeadBuffer[safeID(whichHead,_HeadBuffer_COUNT)].pos + float3(0,100,0) * v;
+   return _HeadBuffer[safeID(whichHead,_HeadBuffer_COUNT)].pos + float3(0,0,0) * v;
 }
 
 float3 DoRemitVelocity(int p){return 0;}

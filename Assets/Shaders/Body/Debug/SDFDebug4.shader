@@ -101,7 +101,7 @@ varyings vert (uint id : SV_VertexID){
 
 
       Vert v = _TransferBuffer[base % _Count];
-      o.worldPos = GetPos( base )  + extra * min(abs((1/(20*v.dist))) * _Size,_Size);
+      o.worldPos = GetPos( base )  + extra * min(abs((1/(2*v.dist))) * _Size,_Size);
      // o.worldPos = 0  + extra;// * _Size;
         o.nor =  v.nor;
       o.uv = uv;
