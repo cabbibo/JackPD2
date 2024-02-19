@@ -95,6 +95,7 @@ public class ButterflySpawner : MonoBehaviour
 
 
     public float3[] positions;
+    public float3[] oPositions;
     public float3[] velocities;
     public bool[] active;
 
@@ -113,6 +114,7 @@ public class ButterflySpawner : MonoBehaviour
         butterflys = new GameObject[numButterflys];
 
         positions = new float3[numButterflys];
+        oPositions = new float3[numButterflys];
         velocities = new float3[numButterflys];
         active = new bool[numButterflys];
 
@@ -238,9 +240,19 @@ public class ButterflySpawner : MonoBehaviour
         biggestPackBoundingBoxMaxFinal = float3(0.1f, 0.1f, 0.1f);
         biggestPackBoundingBoxMaxFinal = float3(-0.1f, -0.1f, -0.1f);
 
+        for (int i = 0; i < positions.Length; i++)
+        {
+            oPositions[i].x = positions[i].x;
+            oPositions[i].y = positions[i].y;
+            oPositions[i].z = positions[i].z;
+        }
+
+
+        // print(length(oPositions[0] - positions[1]) * 100);
 
         for (int i = 0; i < butterflys.Length; i++)
         {
+
             force = 0;
 
             force += CohesionForce(i);
@@ -518,6 +530,13 @@ public class ButterflySpawner : MonoBehaviour
                     biggestPackBoundingBoxMax = max(biggestPackBoundingBoxMax, positions[j]);
                     center += positions[j];
                     count++;
+
+                    //print("hi");
+                    if (length(oPositions[i] - oPositions[j]) >= cohesionDistance)
+                    {
+                        print("hi2");
+                        NewCohesion(i, j);
+                    }
                 }
             }
         }
@@ -561,6 +580,13 @@ public class ButterflySpawner : MonoBehaviour
 
                     totalAligning += 1;
                     alignment += oVel;
+
+                    //print("hi");
+                    if (length(oPositions[i] - oPositions[j]) >= alignmentDistance)
+                    {
+                        print("hi2");
+                        NewAlignment(i, j);
+                    }
                 }
 
             }
@@ -583,7 +609,16 @@ public class ButterflySpawner : MonoBehaviour
                 {
                     totalSeperating += 1;
                     seperation += diff * (1 / dist);
+
+
+                    if (length(oPositions[i] - oPositions[j]) >= seperationDistance)
+                    {
+                        print("hi2");
+                        NewSeperation(i, j);
+                    }
                 }
+
+
             }
         }
 
@@ -608,6 +643,43 @@ public class ButterflySpawner : MonoBehaviour
         Gizmos.DrawWireCube(bbCenter, bbSize);
 
         Gizmos.DrawWireCube(biggestPackCenter, biggestPackBoundingBoxMaxFinal - biggestPackBoundingBoxMinFinal);
+    }
+
+
+    public ParticleSystem ps;
+
+    public void NewCohesion(int id1, int id2)
+    {
+
+        print(" new cohesion ");
+        var emitParams = new ParticleSystem.EmitParams();
+        emitParams.position = positions[id1];
+        emitParams.velocity = new Vector3(0.0f, 0.0f, 0.0f);
+        ps.Emit(emitParams, 1);
+
+
+
+
+    }
+
+    public void NewAlignment(int id1, int id2)
+    {
+
+    }
+
+    public void NewSeperation(int id1, int id2)
+    {
+        print(" new cohesion ");
+        var emitParams = new ParticleSystem.EmitParams();
+        emitParams.position = positions[id1];
+        emitParams.velocity = new Vector3(0.0f, 0.0f, 0.0f);
+        ps.Emit(emitParams, 1);
+
+    }
+
+    public void NewSharkRepel(int id1, int id2, int whichShark)
+    {
+
     }
 
 

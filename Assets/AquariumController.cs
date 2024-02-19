@@ -209,7 +209,7 @@ public class AquariumController : MonoBehaviour
 
 
     public const float sharkSharkRepel1Force_L = 0;
-    public const float sharkSharkRepel1Force_H = 1;
+    public const float sharkSharkRepel1Force_H = 200;
 
     [Range(sharkSharkRepel1Force_L, sharkSharkRepel1Force_H)]
     public float sharkSharkRepel1Force;
@@ -298,13 +298,13 @@ public class AquariumController : MonoBehaviour
     public float megaSharkAlignmentStrength;
 
     public const float megaSharkSeperationDistance_L = 0f;
-    public const float megaSharkSeperationDistance_H = 10f;
+    public const float megaSharkSeperationDistance_H = 20f;
 
     [Range(megaSharkSeperationDistance_L, megaSharkSeperationDistance_H)]
     public float megaSharkSeperationDistance;
 
     public const float megaSharkSeperationStrength_L = 0;
-    public const float megaSharkSeperationStrength_H = 1;
+    public const float megaSharkSeperationStrength_H = 3;
 
     [Range(megaSharkSeperationStrength_L, megaSharkSeperationStrength_H)]
     public float megaSharkSeperationStrength;

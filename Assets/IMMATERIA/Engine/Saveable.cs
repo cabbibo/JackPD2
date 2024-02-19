@@ -16,11 +16,12 @@ public class Saveable {
 
     string fString = "entity"+ UnityEngine.Random.Range(0,10000000);
 
-    //foreach( string s in names ){
-    //  if( fString == s){
-    //    fString = GetSafeName();
-    //  }
-    //}
+    foreach( string s in names ){
+      if( fString == s){
+        fString = GetSafeName();
+        break;
+      }
+    }
 
     names.Add( fString );
     return fString;

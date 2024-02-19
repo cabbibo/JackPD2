@@ -178,9 +178,6 @@ public class AudioPlayer : Cycle{
 
     IEnumerator FadeVal( string valueName , float sv , float v , float time ){
          for (float i = 0; i < time; i += Time.deltaTime ){
-
-             
-
             float newVal =Mathf.SmoothStep( sv , v , (i/time));
             master.SetFloat(valueName, newVal);
             yield return null;

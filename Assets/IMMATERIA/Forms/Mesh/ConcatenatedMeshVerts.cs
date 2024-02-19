@@ -8,6 +8,8 @@ public class ConcatenatedMeshVerts : Particles
   
   public GameObject[] meshes;
 
+  public Bounds bounds;
+
   public override void SetCount(){
     count = 0;
     for( int i = 0; i < meshes.Length; i++ ){
@@ -27,7 +29,12 @@ public class ConcatenatedMeshVerts : Particles
     int[] meshID     = new int[      count ];
 
     int index = 0;
+    bounds = new Bounds (transform.position, Vector3.one);
     for( int i = 0; i < meshes.Length; i++ ){
+
+      bounds.Encapsulate(meshes[i].GetComponent<MeshRenderer>().bounds);
+
+
       Vector3[] v = meshes[i].GetComponent<MeshFilter>().sharedMesh.vertices;
       Vector3[] n = meshes[i].GetComponent<MeshFilter>().sharedMesh.normals;
       Vector4[] t = meshes[i].GetComponent<MeshFilter>().sharedMesh.tangents;

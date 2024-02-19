@@ -84,16 +84,16 @@ Material:
     - _Mode: 0
     - _NoiseImportance: 11
     - _NoiseSharpness: 2.37
-    - _NoiseSize: 4.33
+    - _NoiseSize: 2
     - _NoiseSpeed: 1
     - _NoiseSubtractor: 0
-    - _NumSteps: 5
+    - _NumSteps: 2
     - _OcclusionStrength: 1
     - _OffsetMultiplier: 0
     - _Opaqueness: 0.8
     - _Parallax: 0.02
-    - _ReflectionMultiplier: 1.23
-    - _ReflectionSharpness: 2.81
+    - _ReflectionMultiplier: 1
+    - _ReflectionSharpness: 1
     - _RefractionBackgroundSampleExtraStep: 1
     - _Size: -1
     - _SmoothnessTextureChannel: 0
@@ -109,7 +109,7 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DensityColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _NoiseColor: {r: 0.98157245, g: 0.33333337, b: 1, a: 1}
+    - _NoiseColor: {r: 1, g: 1, b: 1, a: 1}
     - _NoiseOffset: {r: 0, g: 57.8, b: 0, a: 1}
     - _ReflectionColor: {r: 1, g: 0.7537837, b: 0.31372547, a: 1}
   m_BuildTextureStacks: []

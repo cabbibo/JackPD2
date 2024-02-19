@@ -65,15 +65,19 @@ varyings vert (uint id : SV_VertexID){
     
     float2 uv = float2(0,0);
 
-    if( alternate == 0 ){ extra = -l - u; uv = float2(0,0); }
-    if( alternate == 1 ){ extra =  l - u; uv = float2(1,0); }
-    if( alternate == 2 ){ extra =  l + u; uv = float2(1,1); }
-    if( alternate == 3 ){ extra = -l - u; uv = float2(0,0); }
-    if( alternate == 4 ){ extra =  l + u; uv = float2(1,1); }
-    if( alternate == 5 ){ extra = -l + u; uv = float2(0,1); }
-
-
       Transform v = _VertBuffer[base % _Count];
+
+    l = normalize(mul( v.localToWorld , float4(0,0,1,0)).xyz) * 1;
+    u = normalize(cross( UNITY_MATRIX_V[2].xyz , l)) * .3;
+
+    if( alternate == 0 ){ extra =.3 * l + -l - u; uv = float2(0,0); }
+    if( alternate == 1 ){ extra =.3 * l +  l - u; uv = float2(1,0); }
+    if( alternate == 2 ){ extra =.3 * l +  l + u; uv = float2(1,1); }
+    if( alternate == 3 ){ extra =.3 * l + -l - u; uv = float2(0,0); }
+    if( alternate == 4 ){ extra =.3 * l +  l + u; uv = float2(1,1); }
+    if( alternate == 5 ){ extra =.3 * l + -l + u; uv = float2(0,1); }
+
+
       o.worldPos = mul( v.localToWorld , float4(0,0,0,1)).xyz + extra * _Size;
       o.eye = _WorldSpaceCameraPos - o.worldPos;
       o.nor = mul( v.localToWorld , float4(0,1,0,0)).xyz;

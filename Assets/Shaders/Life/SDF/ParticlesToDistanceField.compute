@@ -1,4 +1,5 @@
 ﻿#pragma kernel SetBuffer
+#pragma kernel Reset
 
 struct Vert{
   float3 pos;
@@ -40,10 +41,16 @@ SamplerState _LinearClamp;
 
 float _Time;
 
+float _SmoothingValue;
 
 
 
-
+// polynomial smooth min
+float smin( float a, float b, float k )
+{
+    float h = max( k-abs(a-b), 0.0 )/k;
+    return min( a, b ) - h*h*k*(1.0/4.0);
+}
 
 #define NR_THREADS 128
 [numthreads(NR_THREADS,1,1)]
@@ -92,14 +99,40 @@ void SetBuffer(uint3 id : SV_DispatchThreadID) {
 
     if( _VertBuffer[i].locked > .5 ){
 
-    if( length(d) < sdf.dist){
+
+
+        sdf.dist = smin(length(d),sdf.dist,1);
+
+  /*  if( length(d) < sdf.dist){
       sdf.dist = length(d);
       sdf.nor = normalize(d);
-    }
+    }*/
+
+
     }
 
   }
 
+  
+  _VolumeBuffer[pID] = sdf;
+
+
+}
+
+
+
+
+#define NR_THREADS 128
+[numthreads(NR_THREADS,1,1)]
+void Reset(uint3 id : SV_DispatchThreadID) {
+  
+  
+  int pID = id.x;
+  pID = safeID(pID,_VolumeBuffer_COUNT);
+  SDF sdf = _VolumeBuffer[pID];
+  
+  sdf.dist = 10000;
+  sdf.nor = float3(0,1,0);
   
   _VolumeBuffer[pID] = sdf;
 

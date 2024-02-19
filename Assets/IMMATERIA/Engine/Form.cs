@@ -51,11 +51,10 @@ public class Form : Cycle {
   public virtual void _Embody(){
 
     if( String.IsNullOrEmpty(saveName) ){
-      saveName = "entity"+ UnityEngine.Random.Range(0,10000000);
+      saveName = Saveable.GetSafeName();
     }
 
     if( Saveable.Check(saveName) && !alwaysRemake ){
-      
       loadedFromFile = true;
       Saveable.Load(this);
     }else{
@@ -65,6 +64,55 @@ public class Form : Cycle {
     }
 
   }
+
+
+  // Save button to press
+  public virtual void _SaveData(){
+
+    if( String.IsNullOrEmpty(saveName) ){
+      saveName = Saveable.GetSafeName();
+    }
+
+    Saveable.Save(this);
+    SaveData();
+  
+  
+  }
+
+  public virtual void SaveData(){}
+
+  public virtual void _ResetData(){
+    
+    if( String.IsNullOrEmpty(saveName) ){
+      saveName = Saveable.GetSafeName();
+    }
+
+    Embody();
+    Saveable.Save(this);
+    ResetData();
+
+  }
+
+  public virtual void ResetData(){}
+
+
+  public virtual void _ReloadData(){
+    
+    if( Saveable.Check(saveName) ){
+      loadedFromFile = true;
+      Saveable.Load(this);
+    }else{
+      loadedFromFile = false;
+      Embody();
+      Saveable.Save(this);
+    }
+
+
+    ReloadData();
+
+  }
+
+  public virtual void ReloadData(){}
 
   public virtual void Embody(){}
   public virtual void SetCount(){}

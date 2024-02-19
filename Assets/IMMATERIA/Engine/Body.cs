@@ -20,6 +20,7 @@ namespace IMMATERIA
     public MaterialPropertyBlock mpb;
 
     public bool blockRender;
+    public bool getBounds;
 
     public override void _Create()
     {

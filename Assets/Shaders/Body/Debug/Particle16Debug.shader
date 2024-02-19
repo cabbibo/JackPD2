@@ -30,6 +30,7 @@ Shader "IMMAT/Debug/Particles16" {
 
           if( length( v.uv2 -.5) > .5 ){ discard;}
 
+         // if( v.debug.y > .5 ){discard;}
 
 
           float3 col = _Color.xyz;// float3(v.uv.x , 0 , 0);

@@ -43,6 +43,32 @@ public class AquariumIMMAT : MonoBehaviour
 
 
 
+    public bool showButterflyTransformDebug;
+    public bool showButterflyTrailDebug;
+    public bool showButterflyTrailMeshDebug;
+    public bool showButterflyTrailTubeDebug;
+
+    public bool showButterflySensors;
+
+    public bool showButterflyTrailTube;
+    public bool showButterflyTrailMesh;
+
+
+    public bool showSharkTransformDebug;
+    public bool showSharkTrailDebug;
+    public bool showSharkTrailMeshDebug;
+
+    public bool showSharkSensors;
+    public bool showSharkMesh;
+
+
+    public bool showMegaSharkTransformDebug;
+    public bool showMegaSharkTrailDebug;
+    public bool showMegaSharkTrailMeshDebug;
+
+    public bool showMegaSharkSensors;
+    public bool showMegaSharkMesh;
+
 
 
     public TrailSim butterflyTrail;
@@ -50,15 +76,28 @@ public class AquariumIMMAT : MonoBehaviour
     public TrailSim megaSharkTrail;
 
     public TubeTransfer butterflyTube;
+    public Hair butterflyTrailHair;
     public MeshTrailLifeform butterflyMesh;
+    public IndexForm butterflyMeshTris;
+    public IndexForm butterflyTubeTris;
+    public TransformBuffer butterflyTransform;
 
 
+
+    public Hair sharkTrailHair;
     public MeshHairTransfer sharkMesh;
+    public IndexForm sharkMeshTris;
+    public TransformBuffer sharkTransform;
+
+
+    public Hair megaSharkTrailHair;
     public MeshTrailLifeform megaSharkMesh;
+    public IndexForm megaSharkMeshTris;
+    public TransformBuffer megaSharkTransform;
 
 
 
-
+    public SensorRenderer sensorRenderer;
 
 
 
@@ -84,6 +123,34 @@ public class AquariumIMMAT : MonoBehaviour
         sharkTrail._TrailFollowForce = sharkTrailFollowSpeed;
         megaSharkTrail._TrailFollowForce = megaSharkTrailFollowSpeed;
         butterflyTrail._TrailFollowForce = butterflyTrailFollowSpeed;
+
+
+
+        butterflyTransform.debug = showButterflyTransformDebug;
+        butterflyTrailHair.debug = showButterflyTrailDebug;
+        butterflyMeshTris.debug = showButterflyTrailMeshDebug;
+        butterflyTubeTris.debug = showButterflyTrailTubeDebug;
+
+        butterflyMesh.showBody = showButterflyTrailTube;
+        butterflyTube.showBody = showButterflyTrailMesh;
+
+
+
+
+        sharkTransform.debug = showSharkTransformDebug;
+        sharkTrailHair.debug = showSharkTrailDebug;
+        sharkMeshTris.debug = showSharkTrailMeshDebug;
+
+        sharkMesh.showBody = showSharkMesh;
+
+        megaSharkTransform.debug = showMegaSharkTransformDebug;
+        megaSharkTrailHair.debug = showMegaSharkTrailDebug;
+        megaSharkMeshTris.debug = showMegaSharkTrailMeshDebug;
+
+        megaSharkMesh.showBody = showMegaSharkMesh;
+
+
+
 
 
 

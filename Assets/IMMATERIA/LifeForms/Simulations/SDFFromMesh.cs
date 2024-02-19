@@ -8,6 +8,7 @@ public class SDFFromMesh : Simulation
 {
 
   public Body mesh;
+  public float extentsBuffer;
   public int iterationsPerFrame;
   
   public int currentStep;
@@ -26,7 +27,12 @@ public class SDFFromMesh : Simulation
       currentStep = 0; 
       percentageDone = 0;
       finished = false;
+
+   
+
     }else{
+
+      //we have loaded the file
       finished = true;
     }
 

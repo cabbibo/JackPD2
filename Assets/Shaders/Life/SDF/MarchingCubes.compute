@@ -56,17 +56,21 @@ static float3 vertexOffset[8] =
   float3(0, 0, 1),float3(1, 0, 1),float3(1, 1, 1),float3(0, 1, 1)
 };
 
+float _SDFOffset;
+
 void FillCube(int x, int y, int z, out float cube[8])
 {
-  cube[0] = _VolumeBuffer[x + y * _Dimensions.x + z * _Dimensions.x * _Dimensions.y].dist;
-  cube[1] = _VolumeBuffer[(x + 1) + y * _Dimensions.x + z * _Dimensions.x * _Dimensions.y].dist;
-  cube[2] = _VolumeBuffer[(x + 1) + (y + 1) * _Dimensions.x + z * _Dimensions.x * _Dimensions.y].dist;
-  cube[3] = _VolumeBuffer[x + (y + 1) * _Dimensions.x + z * _Dimensions.x * _Dimensions.y].dist;
 
-  cube[4] = _VolumeBuffer[x + y * _Dimensions.x + (z + 1) * _Dimensions.x * _Dimensions.y].dist;
-  cube[5] = _VolumeBuffer[(x + 1) + y * _Dimensions.x + (z + 1) * _Dimensions.x * _Dimensions.y].dist;
-  cube[6] = _VolumeBuffer[(x + 1) + (y + 1) * _Dimensions.x + (z + 1) * _Dimensions.x * _Dimensions.y].dist;
-  cube[7] = _VolumeBuffer[x + (y + 1) * _Dimensions.x + (z + 1) * _Dimensions.x * _Dimensions.y].dist;
+  float offset = -2;
+  cube[0] = _VolumeBuffer[x + y * _Dimensions.x + z * _Dimensions.x * _Dimensions.y].dist + _SDFOffset;
+  cube[1] = _VolumeBuffer[(x + 1) + y * _Dimensions.x + z * _Dimensions.x * _Dimensions.y].dist + _SDFOffset;
+  cube[2] = _VolumeBuffer[(x + 1) + (y + 1) * _Dimensions.x + z * _Dimensions.x * _Dimensions.y].dist + _SDFOffset;
+  cube[3] = _VolumeBuffer[x + (y + 1) * _Dimensions.x + z * _Dimensions.x * _Dimensions.y].dist + _SDFOffset;
+
+  cube[4] = _VolumeBuffer[x + y * _Dimensions.x + (z + 1) * _Dimensions.x * _Dimensions.y].dist + _SDFOffset;
+  cube[5] = _VolumeBuffer[(x + 1) + y * _Dimensions.x + (z + 1) * _Dimensions.x * _Dimensions.y].dist + _SDFOffset;
+  cube[6] = _VolumeBuffer[(x + 1) + (y + 1) * _Dimensions.x + (z + 1) * _Dimensions.x * _Dimensions.y].dist + _SDFOffset;
+  cube[7] = _VolumeBuffer[x + (y + 1) * _Dimensions.x + (z + 1) * _Dimensions.x * _Dimensions.y].dist + _SDFOffset;
 }
 
 
@@ -87,7 +91,7 @@ float GetOffset(float v1, float v2)
 }
 
 
-#define NR_THREADS 64
+#define NR_THREADS 128
 [numthreads(NR_THREADS,1,1)]
 void March (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID, uint3 id : SV_DispatchThreadID) {
   
@@ -159,15 +163,15 @@ void March (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID, uint3 i
       float3 position;
       position = edgeVertex[triTable[flagIndex][3* i+0]];//-center;
       _VertBuffer[pID * 15 + (3 * i + 0)].pos = mul( _Transform, float4((position - float3(.5,.5,.5)) * 2 * _Extents + _Center,1));///CreateVertex(position, centre, size);
-      _VertBuffer[pID * 15 + (3 * i + 0)].nor = Texture.SampleLevel(_LinearClamp, position, 0).yzw;//_volumeBuffer[pID].nor;
+     // _VertBuffer[pID * 15 + (3 * i + 0)].nor = Texture.SampleLevel(_LinearClamp, position, 0).yzw;//_volumeBuffer[pID].nor;
 
       position = edgeVertex[triTable[flagIndex][ 3 * i+2]];//-center;
       _VertBuffer[pID * 15 + (3 * i + 1)].pos = mul( _Transform, float4((position - float3(.5,.5,.5)) * 2 * _Extents + _Center,1));
-      _VertBuffer[pID * 15 + (3 * i + 1)].nor = Texture.SampleLevel(_LinearClamp, position, 0).yzw;///1getNor(position);//_volumeBuffer[pID].nor;
+      //_VertBuffer[pID * 15 + (3 * i + 1)].nor = Texture.SampleLevel(_LinearClamp, position, 0).yzw;///1getNor(position);//_volumeBuffer[pID].nor;
 
       position = edgeVertex[triTable[flagIndex][ 3 * i+1]];//-center; 
       _VertBuffer[pID * 15 + (3 * i + 2)].pos = mul( _Transform, float4((position - float3(.5,.5,.5)) * 2 * _Extents + _Center,1));
-      _VertBuffer[pID * 15 + (3 * i + 2)].nor = Texture.SampleLevel(_LinearClamp, position, 0).yzw;
+      //_VertBuffer[pID * 15 + (3 * i + 2)].nor = Texture.SampleLevel(_LinearClamp, position, 0).yzw;
 
    }
   }
@@ -175,7 +179,6 @@ void March (uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID, uint3 i
 }
 
 
-#define NR_THREADS 64
 [numthreads(NR_THREADS,1,1)]
 void Reset(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID, uint3 id : SV_DispatchThreadID) {
   

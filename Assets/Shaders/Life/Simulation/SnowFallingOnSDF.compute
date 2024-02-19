@@ -104,7 +104,7 @@ void Flow(uint3 id : SV_DispatchThreadID) {
 
         SDF s = GetSDFInfo( vert.pos );
 
-        if( s.dist < 1 ){
+        if( s.dist < 1 * length(hash2(pID * 10)) ){
             vert.locked = 1;
         }
 
