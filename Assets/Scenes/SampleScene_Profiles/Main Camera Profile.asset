@@ -28,6 +28,59 @@ MonoBehaviour:
   kernelSize:
     overrideState: 1
     value: 1
+--- !u!114 &-7453569805879170470
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f709060dae535141a25e95217e1e37d, type: 3}
+  m_Name: SpaterPostSettings
+  m_EditorClassIdentifier: 
+  active: 1
+  enabled:
+    overrideState: 1
+    value: 1
+  blend:
+    overrideState: 1
+    value: 0.5
+  fade:
+    overrideState: 1
+    value: 0.5
+  audioLookupSize:
+    overrideState: 1
+    value: 0.5
+  audioPower:
+    overrideState: 1
+    value: 0.5
+  audioDistort:
+    overrideState: 1
+    value: 0.5
+  audioBase:
+    overrideState: 1
+    value: 0.5
+  lookupOffset:
+    overrideState: 1
+    value: 0
+  color:
+    overrideState: 0
+    value: {r: 1, g: 1, b: 1, a: 1}
+  frameTex:
+    overrideState: 1
+    value: {fileID: 2800000, guid: f535dd3365c879343b522d91ab12508e, type: 3}
+    defaultState: 1
+  frameUpper:
+    overrideState: 1
+    value: 1
+  frameLower:
+    overrideState: 1
+    value: 0
+  centerOffset:
+    overrideState: 1
+    value: {x: 0, y: 0}
 --- !u!114 &-6988995922656072537
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -46,7 +99,7 @@ MonoBehaviour:
     value: 1
   intensity:
     overrideState: 1
-    value: 3
+    value: 43.9
   threshold:
     overrideState: 1
     value: 0.9
@@ -1482,6 +1535,7 @@ MonoBehaviour:
   - {fileID: -5252201210968125717}
   - {fileID: -522000617555592589}
   - {fileID: -8441437517380533703}
+  - {fileID: -7453569805879170470}
 --- !u!114 &8315468169974104621
 MonoBehaviour:
   m_ObjectHideFlags: 3

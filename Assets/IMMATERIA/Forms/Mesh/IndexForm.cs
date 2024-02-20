@@ -25,6 +25,9 @@ namespace IMMATERIA
     public override void SetStructSize() { structSize = 1; }
 
 
+
+    public string debugLayer;
+
     public override void WhileDebug()
     {
 
@@ -33,7 +36,9 @@ namespace IMMATERIA
       mpb.SetInt("_Count", count);
       mpb.SetInt("_VertCount", toIndex.count);
 
-      Graphics.DrawProcedural(debugMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, (count) * 2 * 3, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+      if (debugLayer == null) { debugLayer = "Debug"; }
+
+      Graphics.DrawProcedural(debugMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, (count) * 2 * 3, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer(debugLayer));
 
     }
 

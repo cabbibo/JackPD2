@@ -240,12 +240,6 @@ public class ButterflySpawner : MonoBehaviour
         biggestPackBoundingBoxMaxFinal = float3(0.1f, 0.1f, 0.1f);
         biggestPackBoundingBoxMaxFinal = float3(-0.1f, -0.1f, -0.1f);
 
-        for (int i = 0; i < positions.Length; i++)
-        {
-            oPositions[i].x = positions[i].x;
-            oPositions[i].y = positions[i].y;
-            oPositions[i].z = positions[i].z;
-        }
 
 
         // print(length(oPositions[0] - positions[1]) * 100);
@@ -303,6 +297,16 @@ public class ButterflySpawner : MonoBehaviour
 
 
         }
+
+
+
+        for (int i = 0; i < positions.Length; i++)
+        {
+            oPositions[i].x = positions[i].x;
+            oPositions[i].y = positions[i].y;
+            oPositions[i].z = positions[i].z;
+        }
+
 
         for (int i = 0; i < butterflys.Length; i++)
         {
@@ -442,6 +446,12 @@ public class ButterflySpawner : MonoBehaviour
                 diff = positions[i] - p;
 
                 totalSharkRepelForce += (normalize(diff) / dist) * sharkRepelForces[spawnerID];// * length(sharkSpeed);
+
+                float oDist = length(oPositions[i] - sharkSpawner.oPositions[j]);
+                if (oDist >= sharkRepelRadiuses[spawnerID])
+                {
+                    NewSharkRepel(i, j, spawnerID, Mathf.Abs(oDist - dist));
+                }
             }
 
         }
@@ -479,6 +489,12 @@ public class ButterflySpawner : MonoBehaviour
                 diff = positions[i] - p;
 
                 totalPreyAttractForce += -(normalize(diff) / dist) * preyAttractForces[spawnerID];// * length(sharkSpeed);
+
+                float oDist = length(oPositions[i] - sharkSpawner.oPositions[j]);
+                if (oDist >= preyAttractRadiuses[spawnerID])
+                {
+                    NewPreyAttract(i, j, spawnerID, Mathf.Abs(oDist - dist));
+                }
             }
 
         }
@@ -534,8 +550,7 @@ public class ButterflySpawner : MonoBehaviour
                     //print("hi");
                     if (length(oPositions[i] - oPositions[j]) >= cohesionDistance)
                     {
-                        print("hi2");
-                        NewCohesion(i, j);
+                        NewCohesion(i, j, Mathf.Abs(length(oPositions[i] - oPositions[j]) - dist));
                     }
                 }
             }
@@ -584,8 +599,7 @@ public class ButterflySpawner : MonoBehaviour
                     //print("hi");
                     if (length(oPositions[i] - oPositions[j]) >= alignmentDistance)
                     {
-                        print("hi2");
-                        NewAlignment(i, j);
+                        NewAlignment(i, j, Mathf.Abs(length(oPositions[i] - oPositions[j]) - dist));
                     }
                 }
 
@@ -613,8 +627,7 @@ public class ButterflySpawner : MonoBehaviour
 
                     if (length(oPositions[i] - oPositions[j]) >= seperationDistance)
                     {
-                        print("hi2");
-                        NewSeperation(i, j);
+                        NewSeperation(i, j, Mathf.Abs(length(oPositions[i] - oPositions[j]) - dist));
                     }
                 }
 
@@ -648,39 +661,221 @@ public class ButterflySpawner : MonoBehaviour
 
     public ParticleSystem ps;
 
-    public void NewCohesion(int id1, int id2)
+    public GranularSynth synth;
+
+    public float lastCohesionDelta;
+    public float lastSeperationDelta;
+    public float lastAlignmentDelta;
+    public float lastSharkRepelDelta;
+
+
+    public float CohesionCutoffForSoundPlay;
+    public Color CohesionColor;
+
+
+    public float minCohesionLength;
+    public float maxCohesionLength;
+
+    public float minCohesionPitch;
+    public float maxCohesionPitch;
+
+    public float minCohesionLookup;
+    public float maxCohesionLookup;
+
+    public float CohesionVolumeMultiplier;
+    public float CohesionDeltaMultiplier;
+
+    public float CohesionSizeMultiplier;
+
+
+
+    public void NewCohesion(int id1, int id2, float delta)
     {
 
-        print(" new cohesion ");
-        var emitParams = new ParticleSystem.EmitParams();
-        emitParams.position = positions[id1];
-        emitParams.velocity = new Vector3(0.0f, 0.0f, 0.0f);
-        ps.Emit(emitParams, 1);
+        lastCohesionDelta = delta;
+
+        if (delta > CohesionCutoffForSoundPlay)
+        {
+
+            float vDelta = (delta - CohesionCutoffForSoundPlay) * CohesionDeltaMultiplier;
+            vDelta = Mathf.Clamp(vDelta, 0, 1);
+
+            //print(vDelta);
+
+            var emitParams = new ParticleSystem.EmitParams();
+            emitParams.position = positions[id1];
+            emitParams.velocity = new Vector3(0.0f, 0.0f, 0.0f);
+            emitParams.startSize = vDelta * CohesionSizeMultiplier;
+
+            emitParams.startColor = CohesionColor;
+            ps.Emit(emitParams, 1);
 
 
+            float length = Mathf.Lerp(minCohesionLength, maxCohesionLength, vDelta);
+
+            synth.NewGrain(length, Mathf.Lerp(minCohesionPitch, maxCohesionPitch, vDelta), vDelta * CohesionVolumeMultiplier, Mathf.Lerp(minCohesionLookup, maxCohesionLookup, vDelta));
+
+        }
 
 
     }
 
-    public void NewAlignment(int id1, int id2)
+    public float AlignmentCutoffForSoundPlay;
+    public Color AlignmentColor;
+
+
+    public float minAlignmentLength;
+    public float maxAlignmentLength;
+
+    public float minAlignmentPitch;
+    public float maxAlignmentPitch;
+
+    public float minAlignmentLookup;
+    public float maxAlignmentLookup;
+
+    public float AlignmentVolumeMultiplier;
+    public float AlignmentDeltaMultiplier;
+
+    public float AlignmentSizeMultiplier;
+
+
+
+    public void NewAlignment(int id1, int id2, float delta)
+    {
+
+        lastAlignmentDelta = delta;
+
+        if (delta > AlignmentCutoffForSoundPlay)
+        {
+
+            float vDelta = (delta - AlignmentCutoffForSoundPlay) * AlignmentDeltaMultiplier;
+            vDelta = Mathf.Clamp(vDelta, 0, 1);
+
+            //print(vDelta);
+
+            var emitParams = new ParticleSystem.EmitParams();
+            emitParams.position = positions[id1];
+            emitParams.velocity = new Vector3(0.0f, 0.0f, 0.0f);
+            emitParams.startSize = vDelta * AlignmentSizeMultiplier;
+
+            emitParams.startColor = AlignmentColor;
+            ps.Emit(emitParams, 1);
+
+
+            float length = Mathf.Lerp(minAlignmentLength, maxAlignmentLength, vDelta);
+
+            synth.NewGrain(length, Mathf.Lerp(minAlignmentPitch, maxAlignmentPitch, vDelta), vDelta * AlignmentVolumeMultiplier, Mathf.Lerp(minAlignmentLookup, maxAlignmentLookup, vDelta));
+
+        }
+
+
+    }
+
+
+
+    public float SeperationCutoffForSoundPlay;
+    public Color SeperationColor;
+
+
+    public float minSeperationLength;
+    public float maxSeperationLength;
+
+    public float minSeperationPitch;
+    public float maxSeperationPitch;
+
+    public float minSeperationLookup;
+    public float maxSeperationLookup;
+
+    public float SeperationVolumeMultiplier;
+    public float SeperationDeltaMultiplier;
+
+    public float SeperationSizeMultiplier;
+
+
+
+    public void NewSeperation(int id1, int id2, float delta)
+    {
+
+        lastSeperationDelta = delta;
+
+        if (delta > SeperationCutoffForSoundPlay)
+        {
+
+            float vDelta = (delta - SeperationCutoffForSoundPlay) * SeperationDeltaMultiplier;
+            vDelta = Mathf.Clamp(vDelta, 0, 1);
+
+            print(vDelta);
+
+            var emitParams = new ParticleSystem.EmitParams();
+            emitParams.position = positions[id1];
+            emitParams.velocity = new Vector3(0.0f, 0.0f, 0.0f);
+            emitParams.startSize = vDelta * SeperationSizeMultiplier;
+
+            emitParams.startColor = SeperationColor;
+            ps.Emit(emitParams, 1);
+
+
+            float length = Mathf.Lerp(minSeperationLength, maxSeperationLength, vDelta);
+
+            synth.NewGrain(length, Mathf.Lerp(minSeperationPitch, maxSeperationPitch, vDelta), vDelta * SeperationVolumeMultiplier, Mathf.Lerp(minSeperationLookup, maxSeperationLookup, vDelta));
+
+        }
+
+
+    }
+
+
+    public float SharkRepelCutoffForSoundPlay;
+    public Color[] SharkRepelColor;
+    public float minSharkRepelPitch;
+    public float maxSharkRepelPitch;
+
+    public float minSharkRepelLookup;
+    public float maxSharkRepelLookup;
+
+
+    public float minSharkRepelLength;
+    public float maxSharkRepelLength;
+
+    public float SharkRepelVolumeMultiplier;
+    public float SharkRepelDeltaMultiplier;
+
+    public float SharkRepelSizeMultiplier;
+
+    public void NewSharkRepel(int id1, int id2, int whichShark, float delta)
+    {
+
+
+        lastSharkRepelDelta = delta;
+        if (delta > SharkRepelCutoffForSoundPlay)
+        {
+
+            float vDelta = (delta - SharkRepelCutoffForSoundPlay) * SharkRepelDeltaMultiplier;
+            vDelta = Mathf.Clamp(vDelta, 0, 1);
+
+            var emitParams = new ParticleSystem.EmitParams();
+            emitParams.position = positions[id1];
+            emitParams.velocity = new Vector3(0.0f, 0.0f, 0.0f);
+            emitParams.startSize = vDelta * SharkRepelSizeMultiplier;
+
+            emitParams.startColor = SharkRepelColor[whichShark];
+            ps.Emit(emitParams, 1);
+
+
+            float length = Mathf.Lerp(minSharkRepelLength, maxSharkRepelLength, vDelta);
+            synth.NewGrain(length, Mathf.Lerp(minSharkRepelPitch, maxSharkRepelPitch, vDelta), vDelta * SharkRepelVolumeMultiplier, Mathf.Lerp(minSharkRepelLookup, maxSharkRepelLookup, vDelta));
+
+        }
+
+    }
+
+
+
+    public void NewPreyAttract(int id1, int id2, int whichShark, float delta)
     {
 
     }
 
-    public void NewSeperation(int id1, int id2)
-    {
-        print(" new cohesion ");
-        var emitParams = new ParticleSystem.EmitParams();
-        emitParams.position = positions[id1];
-        emitParams.velocity = new Vector3(0.0f, 0.0f, 0.0f);
-        ps.Emit(emitParams, 1);
-
-    }
-
-    public void NewSharkRepel(int id1, int id2, int whichShark)
-    {
-
-    }
 
 
 }

@@ -58,7 +58,7 @@ public class SensorRenderer : Cycle
 
             int totalCount = butterfly.count * butterfly.count * 9;
 
-            Graphics.DrawProcedural(butterflySelfMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(butterflySelfMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Sensors"));
 
         }
 
@@ -75,7 +75,7 @@ public class SensorRenderer : Cycle
             int totalCount = butterfly.count * shark.count * 3;
 
 
-            Graphics.DrawProcedural(butterflyRunMaterial1, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(butterflyRunMaterial1, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Sensors"));
 
         }
 
@@ -92,7 +92,7 @@ public class SensorRenderer : Cycle
             int totalCount = butterfly.count * megaShark.count * 3;
 
 
-            Graphics.DrawProcedural(butterflyRunMaterial2, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(butterflyRunMaterial2, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Sensors"));
 
         }
 
@@ -112,7 +112,7 @@ public class SensorRenderer : Cycle
 
             int totalCount = shark.count * shark.count * 9;
 
-            Graphics.DrawProcedural(sharkSelfMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(sharkSelfMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Sensors"));
 
         }
 
@@ -128,7 +128,7 @@ public class SensorRenderer : Cycle
             int totalCount = shark.count * megaShark.count * 3;
 
 
-            Graphics.DrawProcedural(sharkRunMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(sharkRunMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Sensors"));
 
         }
 
@@ -145,7 +145,7 @@ public class SensorRenderer : Cycle
             int totalCount = shark.count * butterfly.count * 3;
 
 
-            Graphics.DrawProcedural(sharkChaseMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(sharkChaseMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Sensors"));
 
         }
 
@@ -167,7 +167,7 @@ public class SensorRenderer : Cycle
 
             int totalCount = megaShark.count * megaShark.count * 9;
 
-            Graphics.DrawProcedural(megaSharkSelfMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(megaSharkSelfMaterial, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Sensors"));
 
         }
 
@@ -186,7 +186,7 @@ public class SensorRenderer : Cycle
             int totalCount = megaShark.count * butterfly.count * 3;
 
 
-            Graphics.DrawProcedural(megaSharkChaseMaterial1, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(megaSharkChaseMaterial1, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Sensors"));
 
         }
 
@@ -204,7 +204,7 @@ public class SensorRenderer : Cycle
             int totalCount = megaShark.count * shark.count * 3;
 
 
-            Graphics.DrawProcedural(megaSharkChaseMaterial2, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(megaSharkChaseMaterial2, new Bounds(transform.position, Vector3.one * 5000), MeshTopology.Triangles, totalCount, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Sensors"));
 
         }
 
