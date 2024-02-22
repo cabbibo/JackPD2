@@ -126,204 +126,211 @@ public class GranularSynth : MonoBehaviour
 
 
 
-}
-
-public struct Grain
-{
-    public int startPositionInSample;
-    public float currentPositionInSample;
-
-    public int fPositionInSample;
-    public float playbackSpeed;
-    public float loudness;
-
-    public int totalNumberOfSamples;
-    public int active;
-    public int id;
-
-    public int clipID;
 
 
-    Grain(int startPositionInSample, int currentPositionInSample, int fPositionInSample, float playbackSpeed, int totalNumberOfSamples, float loudness)
+    public struct Grain
     {
-        this.startPositionInSample = startPositionInSample;
-        this.currentPositionInSample = 0;
-        this.fPositionInSample = fPositionInSample;
-        this.playbackSpeed = playbackSpeed;
-        this.totalNumberOfSamples = totalNumberOfSamples;
-        this.active = 1;
-        this.id = Random.Range(0, 100000000);
-        this.loudness = loudness;
-        this.clipID = 0;
-    }
+        public int startPositionInSample;
+        public float currentPositionInSample;
+
+        public int fPositionInSample;
+        public float playbackSpeed;
+        public float loudness;
+
+        public int totalNumberOfSamples;
+        public int active;
+        public int id;
+
+        public int clipID;
 
 
-}
-
-
-public void NewGrain()
-{
-    if (grains.Count >= maxGrains)
-    {
-        return;
-    }
-
-    Grain g = new Grain();
-    g.clipID = 0;
-    g.startPositionInSample = Random.Range(0, sampleLengths[g.clipID]);
-    g.currentPositionInSample = 0;
-    g.playbackSpeed = Random.Range(.4f, 2.1f);
-    g.totalNumberOfSamples = sampleLengths[g.clipID] / 20;
-    g.active = 1;
-    g.loudness = 1;
-    g.id = Random.Range(0, 100000000);
-    grains.Add(g);
-
-}
-
-public void NewGrain(float length, float speed, float loudness, int clipID)
-{
-
-    if (grains.Count >= maxGrains)
-    {
-        return;
-    }
-    Grain g = new Grain();
-    g.clipID = clipID;
-    g.startPositionInSample = Random.Range(0, sampleLengths[g.clipID]);
-    g.currentPositionInSample = 0;
-    g.playbackSpeed = speed;
-    g.totalNumberOfSamples = (int)((float)sampleLengths[g.clipID] * length);
-    g.active = 1;
-    g.loudness = loudness;
-    g.id = Random.Range(0, 100000000);
-    grains.Add(g);
-
-
-}
-
-
-public void NewGrain(float length, float speed, float loudness, float positionInSample, int clipID)
-{
-
-    if (grains.Count >= maxGrains)
-    {
-        return;
-    }
-
-
-    Grain g = new Grain();
-    g.clipID = clipID;
-    g.totalNumberOfSamples = (int)((float)sampleRate * length);
-    g.startPositionInSample = (int)(positionInSample * (float)(sampleLengths[g.clipID] - g.totalNumberOfSamples));
-    g.currentPositionInSample = 0;
-    g.playbackSpeed = speed;
-    g.totalNumberOfSamples = (int)((float)sampleRate * length);
-    g.active = 1;
-    g.loudness = loudness;
-    g.id = Random.Range(0, 100000000);
-    grains.Add(g);
-
-}
-
-
-
-int positionInGrain;
-List<Grain> tmpGrains;
-
-
-float sample1;
-float sample2;
-float fSample;
-int fPositionInSampleCeil;
-int fPositionInSampleFloor;
-
-float fPositionInSample;
-float nInSample;
-float env;
-float lerpVal;
-Grain g;
-
-public double sample;
-public int dataLen;
-void OnAudioFilterRead(float[] data, int channels)
-{
-
-    // copy in our new grains
-    if (newGrains == true)
-    {
-        tmpGrains = new List<Grain>(grains);
-        newGrains = false;
-    }
-
-    if (!running)
-        return;
-
-    sample = AudioSettings.dspTime * sampleRate;
-    dataLen = data.Length / channels;
-
-    int n = 0;
-    while (n < dataLen)
-    {
-        for (int i = 0; i < tmpGrains.Count; i++)
+        Grain(int startPositionInSample, int currentPositionInSample, int fPositionInSample, float playbackSpeed, int totalNumberOfSamples, float loudness)
         {
-
-            g = tmpGrains[i];
-
-            fPositionInSample = ((float)g.startPositionInSample + g.currentPositionInSample) % ((float)sampleLengths[g.clipID] / 2);
-            nInSample = (float)g.currentPositionInSample / (float)g.totalNumberOfSamples;
-
-            env = Mathf.Clamp((1 - Mathf.Abs(nInSample - .5f) * 2) * 4, 0, g.loudness); ;
-
-
-            fPositionInSampleCeil = (int)Mathf.Ceil(fPositionInSample);
-            fPositionInSampleFloor = (int)Mathf.Ceil(fPositionInSample);
-
-            if (fPositionInSampleCeil * 2 + 1 >= sampleLengths[g.clipID])
-            {
-                fPositionInSampleCeil -= sampleLengths[g.clipID] / 2;
-                fPositionInSampleFloor -= sampleLengths[g.clipID] / 2;
-            }
-
-
-
-            lerpVal = fPositionInSample - (float)fPositionInSampleFloor;
-
-            sample1 = samples[g.clipID][2 * fPositionInSampleFloor];
-            sample2 = samples[g.clipID][2 * fPositionInSampleCeil];
-            fSample = sample1 + (sample2 - sample1) * lerpVal;
-
-            data[n * 2] += fSample * env;
-
-
-            sample1 = samples[g.clipID][2 * fPositionInSampleFloor + 1];
-            sample2 = samples[g.clipID][2 * fPositionInSampleCeil + 1];
-            fSample = sample1 + (sample2 - sample1) * lerpVal;
-
-            data[n * 2 + 1] += fSample * env;
-
-            g.currentPositionInSample += g.playbackSpeed;
-
-            if (g.currentPositionInSample >= g.totalNumberOfSamples / 2)
-            {
-                g.active = 0;
-            }
-
-            tmpGrains[i] = g;
-
-
-
+            this.startPositionInSample = startPositionInSample;
+            this.currentPositionInSample = 0;
+            this.fPositionInSample = fPositionInSample;
+            this.playbackSpeed = playbackSpeed;
+            this.totalNumberOfSamples = totalNumberOfSamples;
+            this.active = 1;
+            this.id = Random.Range(0, 100000000);
+            this.loudness = loudness;
+            this.clipID = 0;
         }
 
 
+    }
 
-        data[n * 2] = Mathf.Clamp(data[n * 2], -1, 1);
-        data[n * 2 + 1] = Mathf.Clamp(data[n * 2 + 1], -1, 1);
 
-        n++;
+    public void NewGrain()
+    {
+        if (grains.Count >= maxGrains)
+        {
+            return;
+        }
+
+        Grain g = new Grain();
+        g.clipID = 0;
+        g.startPositionInSample = Random.Range(0, sampleLengths[g.clipID]);
+        g.currentPositionInSample = 0;
+        g.playbackSpeed = Random.Range(.4f, 2.1f);
+        g.totalNumberOfSamples = sampleLengths[g.clipID] / 20;
+        g.active = 1;
+        g.loudness = 1;
+        g.id = Random.Range(0, 100000000);
+        grains.Add(g);
 
     }
 
-}
+    public void NewGrain(float length, float speed, float loudness, int clipID)
+    {
+
+        if (grains.Count >= maxGrains)
+        {
+            return;
+        }
+        Grain g = new Grain();
+        g.clipID = clipID;
+        g.startPositionInSample = Random.Range(0, sampleLengths[g.clipID]);
+        g.currentPositionInSample = 0;
+        g.playbackSpeed = speed;
+        g.totalNumberOfSamples = (int)((float)sampleLengths[g.clipID] * length);
+        g.active = 1;
+        g.loudness = loudness;
+        g.id = Random.Range(0, 100000000);
+        grains.Add(g);
+
+
+    }
+
+
+    public void NewGrain(float length, float speed, float loudness, float positionInSample, int clipID)
+    {
+
+        if (grains.Count >= maxGrains)
+        {
+            return;
+        }
+
+
+        Grain g = new Grain();
+        g.clipID = clipID;
+        g.totalNumberOfSamples = (int)((float)sampleRate * length);
+        g.startPositionInSample = (int)(positionInSample * (float)(sampleLengths[g.clipID] - g.totalNumberOfSamples));
+        g.currentPositionInSample = 0;
+        g.playbackSpeed = speed;
+        g.totalNumberOfSamples = (int)((float)sampleRate * length);
+        g.active = 1;
+        g.loudness = loudness;
+        g.id = Random.Range(0, 100000000);
+        grains.Add(g);
+
+    }
+
+
+
+    int positionInGrain;
+    List<Grain> tmpGrains;
+
+
+    float sample1;
+    float sample2;
+    float fSample;
+    int fPositionInSampleCeil;
+    int fPositionInSampleFloor;
+
+    float fPositionInSample;
+    float nInSample;
+    float env;
+    float lerpVal;
+    Grain g;
+
+    public double sample;
+    public int dataLen;
+    void OnAudioFilterRead(float[] data, int channels)
+    {
+
+        lock (tmpGrains)
+        {
+            lock (grains)
+            {
+
+                // copy in our new grains
+                if (newGrains == true)
+                {
+                    tmpGrains = new List<Grain>(grains);
+                    newGrains = false;
+                }
+
+                if (!running)
+                    return;
+
+                sample = AudioSettings.dspTime * sampleRate;
+                dataLen = data.Length / channels;
+
+                int n = 0;
+                while (n < dataLen)
+                {
+                    for (int i = 0; i < tmpGrains.Count; i++)
+                    {
+
+                        g = tmpGrains[i];
+
+                        fPositionInSample = ((float)g.startPositionInSample + g.currentPositionInSample) % ((float)sampleLengths[g.clipID] / 2);
+                        nInSample = (float)g.currentPositionInSample / (float)g.totalNumberOfSamples;
+
+                        env = Mathf.Clamp((1 - Mathf.Abs(nInSample - .5f) * 2) * 4, 0, g.loudness); ;
+
+
+                        fPositionInSampleCeil = (int)Mathf.Ceil(fPositionInSample);
+                        fPositionInSampleFloor = (int)Mathf.Ceil(fPositionInSample);
+
+                        if (fPositionInSampleCeil * 2 + 1 >= sampleLengths[g.clipID])
+                        {
+                            fPositionInSampleCeil -= sampleLengths[g.clipID] / 2;
+                            fPositionInSampleFloor -= sampleLengths[g.clipID] / 2;
+                        }
+
+
+
+                        lerpVal = fPositionInSample - (float)fPositionInSampleFloor;
+
+                        sample1 = samples[g.clipID][2 * fPositionInSampleFloor];
+                        sample2 = samples[g.clipID][2 * fPositionInSampleCeil];
+                        fSample = sample1 + (sample2 - sample1) * lerpVal;
+
+                        data[n * 2] += fSample * env;
+
+
+                        sample1 = samples[g.clipID][2 * fPositionInSampleFloor + 1];
+                        sample2 = samples[g.clipID][2 * fPositionInSampleCeil + 1];
+                        fSample = sample1 + (sample2 - sample1) * lerpVal;
+
+                        data[n * 2 + 1] += fSample * env;
+
+                        g.currentPositionInSample += g.playbackSpeed;
+
+                        if (g.currentPositionInSample >= g.totalNumberOfSamples / 2)
+                        {
+                            g.active = 0;
+                        }
+
+                        tmpGrains[i] = g;
+
+
+
+                    }
+
+
+
+                    data[n * 2] = Mathf.Clamp(data[n * 2], -1, 1);
+                    data[n * 2 + 1] = Mathf.Clamp(data[n * 2 + 1], -1, 1);
+
+                    n++;
+
+                }
+            }
+        }
+
+    }
 
 }
