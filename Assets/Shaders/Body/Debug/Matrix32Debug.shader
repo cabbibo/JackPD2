@@ -8,8 +8,15 @@ Shader "Debug/Matrix32" {
 
 
   SubShader{
-    Cull Off
+	     Tags { "RenderType"="Transparent" "Queue"="Transparent"}
+
     Pass{
+
+		
+        ZWrite Off
+        Blend One One
+        Cull Off
+
 
       CGPROGRAM
       

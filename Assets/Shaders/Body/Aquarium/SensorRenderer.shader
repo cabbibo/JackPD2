@@ -7,7 +7,14 @@
 
   SubShader{
 
+	     Tags { "RenderType"="Transparent" "Queue"="Transparent"}
+
     Pass{
+
+		
+        ZWrite Off
+        Blend One One
+        Cull Off
 
 		  CGPROGRAM
 
@@ -163,6 +170,11 @@
 			//col = (normalize(-v.dir) * .5)   + .5;//
 
 			col *= .5 + .5;
+
+			col *= .1;
+
+			col = saturate(col);
+		
 
           return float4( col * _Color , 1 );
       }

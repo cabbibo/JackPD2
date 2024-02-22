@@ -35,6 +35,10 @@ Material:
     m_Floats:
     - _AudioMultiplier: 1
     - _AudioPow: 1
+    - _BloomIntensity: 2
+    - _BloomScale: 0.01
+    - _BloomThreshold: 0
+    - _BlurSize: 5
     - _ColorMultiplier: 1
     - _IndexOfRefraction: 0.8
     - _LightColorMultiplier: 1

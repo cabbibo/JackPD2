@@ -39,18 +39,21 @@ namespace IMMATERIA
             count = numHairs * numVertsPerHair;
         }
 
+
         public override void WhileDebug()
         {
+
+            if (debugLayer == null) { debugLayer = "Debug"; }
 
             lineMPB.SetBuffer("_VertBuffer", _buffer);
             lineMPB.SetInt("_Count", count);
             lineMPB.SetInt("_NumVertsPerHair", numVertsPerHair);
-            Graphics.DrawProcedural(lineDebugMaterial, new Bounds(transform.position, Vector3.one * 50000), MeshTopology.Lines, count * 2, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(lineDebugMaterial, new Bounds(transform.position, Vector3.one * 50000), MeshTopology.Lines, count * 2, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer(debugLayer));
 
 
             mpb.SetBuffer("_VertBuffer", _buffer);
             mpb.SetInt("_Count", count);
-            Graphics.DrawProcedural(debugMaterial, new Bounds(transform.position, Vector3.one * 50000), MeshTopology.Triangles, count * 3 * 2, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+            Graphics.DrawProcedural(debugMaterial, new Bounds(transform.position, Vector3.one * 50000), MeshTopology.Triangles, count * 3 * 2, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer(debugLayer));
 
             //  Graphics.DrawProceduralNow(MeshTopology.Triangles, count  * 2 );
 
@@ -60,7 +63,7 @@ namespace IMMATERIA
 
                 mpb.SetBuffer("_VertBuffer", _buffer);
                 mpb.SetInt("_Count", count);
-                Graphics.DrawProcedural(debugMaterial, new Bounds(transform.position, Vector3.one * 50000), MeshTopology.Triangles, count * 3 * 3 * 3, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+                Graphics.DrawProcedural(debugMaterial, new Bounds(transform.position, Vector3.one * 50000), MeshTopology.Triangles, count * 3 * 3 * 3, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer(debugLayer));
 
             }
             else
@@ -68,7 +71,7 @@ namespace IMMATERIA
 
                 mpb.SetBuffer("_VertBuffer", _buffer);
                 mpb.SetInt("_Count", count);
-                Graphics.DrawProcedural(debugMaterial, new Bounds(transform.position, Vector3.one * 50000), MeshTopology.Triangles, count * 3 * 2, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer("Debug"));
+                Graphics.DrawProcedural(debugMaterial, new Bounds(transform.position, Vector3.one * 50000), MeshTopology.Triangles, count * 3 * 2, 1, null, mpb, ShadowCastingMode.Off, true, LayerMask.NameToLayer(debugLayer));
 
             }
         }

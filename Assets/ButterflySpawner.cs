@@ -687,6 +687,8 @@ public class ButterflySpawner : MonoBehaviour
 
     public float CohesionSizeMultiplier;
 
+    public int CohesionClipID;
+
 
 
     public void NewCohesion(int id1, int id2, float delta)
@@ -713,7 +715,7 @@ public class ButterflySpawner : MonoBehaviour
 
             float length = Mathf.Lerp(minCohesionLength, maxCohesionLength, vDelta);
 
-            synth.NewGrain(length, Mathf.Lerp(minCohesionPitch, maxCohesionPitch, vDelta), vDelta * CohesionVolumeMultiplier, Mathf.Lerp(minCohesionLookup, maxCohesionLookup, vDelta));
+            synth.NewGrain(length, Mathf.Lerp(minCohesionPitch, maxCohesionPitch, vDelta), vDelta * CohesionVolumeMultiplier, Mathf.Lerp(minCohesionLookup, maxCohesionLookup, vDelta), CohesionClipID);
 
         }
 
@@ -738,6 +740,7 @@ public class ButterflySpawner : MonoBehaviour
 
     public float AlignmentSizeMultiplier;
 
+    public int AlignmentClipID;
 
 
     public void NewAlignment(int id1, int id2, float delta)
@@ -764,7 +767,7 @@ public class ButterflySpawner : MonoBehaviour
 
             float length = Mathf.Lerp(minAlignmentLength, maxAlignmentLength, vDelta);
 
-            synth.NewGrain(length, Mathf.Lerp(minAlignmentPitch, maxAlignmentPitch, vDelta), vDelta * AlignmentVolumeMultiplier, Mathf.Lerp(minAlignmentLookup, maxAlignmentLookup, vDelta));
+            synth.NewGrain(length, Mathf.Lerp(minAlignmentPitch, maxAlignmentPitch, vDelta), vDelta * AlignmentVolumeMultiplier, Mathf.Lerp(minAlignmentLookup, maxAlignmentLookup, vDelta), AlignmentClipID);
 
         }
 
@@ -792,6 +795,7 @@ public class ButterflySpawner : MonoBehaviour
     public float SeperationSizeMultiplier;
 
 
+    public int SeperationClipID;
 
     public void NewSeperation(int id1, int id2, float delta)
     {
@@ -804,7 +808,7 @@ public class ButterflySpawner : MonoBehaviour
             float vDelta = (delta - SeperationCutoffForSoundPlay) * SeperationDeltaMultiplier;
             vDelta = Mathf.Clamp(vDelta, 0, 1);
 
-            print(vDelta);
+            //            print(vDelta);
 
             var emitParams = new ParticleSystem.EmitParams();
             emitParams.position = positions[id1];
@@ -817,7 +821,7 @@ public class ButterflySpawner : MonoBehaviour
 
             float length = Mathf.Lerp(minSeperationLength, maxSeperationLength, vDelta);
 
-            synth.NewGrain(length, Mathf.Lerp(minSeperationPitch, maxSeperationPitch, vDelta), vDelta * SeperationVolumeMultiplier, Mathf.Lerp(minSeperationLookup, maxSeperationLookup, vDelta));
+            synth.NewGrain(length, Mathf.Lerp(minSeperationPitch, maxSeperationPitch, vDelta), vDelta * SeperationVolumeMultiplier, Mathf.Lerp(minSeperationLookup, maxSeperationLookup, vDelta), SeperationClipID);
 
         }
 
@@ -842,6 +846,7 @@ public class ButterflySpawner : MonoBehaviour
 
     public float SharkRepelSizeMultiplier;
 
+    public int[] SharkRepelClipIDs;
     public void NewSharkRepel(int id1, int id2, int whichShark, float delta)
     {
 
@@ -863,7 +868,7 @@ public class ButterflySpawner : MonoBehaviour
 
 
             float length = Mathf.Lerp(minSharkRepelLength, maxSharkRepelLength, vDelta);
-            synth.NewGrain(length, Mathf.Lerp(minSharkRepelPitch, maxSharkRepelPitch, vDelta), vDelta * SharkRepelVolumeMultiplier, Mathf.Lerp(minSharkRepelLookup, maxSharkRepelLookup, vDelta));
+            synth.NewGrain(length, Mathf.Lerp(minSharkRepelPitch, maxSharkRepelPitch, vDelta), vDelta * SharkRepelVolumeMultiplier, Mathf.Lerp(minSharkRepelLookup, maxSharkRepelLookup, vDelta), SharkRepelClipIDs[whichShark]);
 
         }
 
